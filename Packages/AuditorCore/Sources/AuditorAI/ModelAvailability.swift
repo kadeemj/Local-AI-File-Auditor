@@ -7,9 +7,14 @@ import FoundationModels
 /// Reports whether on-device Apple Intelligence is usable for semantic judgments.
 /// Checked per scan (not per launch): the model can become available mid-session
 /// after a download, or unavailable if the user disables Apple Intelligence.
-public enum ModelAvailability {
+public enum ModelAvailability: Sendable, Equatable {
     case available
     case unavailable(reason: String)
+
+    public var isAvailable: Bool {
+        if case .available = self { return true }
+        return false
+    }
 
     public static func current() -> ModelAvailability {
         #if canImport(FoundationModels)

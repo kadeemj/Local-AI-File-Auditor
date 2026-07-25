@@ -8,7 +8,7 @@ public struct Policy: Codable, Sendable, Identifiable {
     public let id: String
     public let displayName: String
     /// Naming template DSL, e.g. "YYYY-MM-DD_{DocType}_{Org}_{Status}".
-    /// Parsed by `NamingTemplate` (Phase 5).
+    /// Parsed and rendered by `NamingTemplate`.
     public let namingTemplate: String?
     /// Recommended top-level folder taxonomy, compared against — never forced onto —
     /// the organization's existing structure.
@@ -31,7 +31,7 @@ public struct Policy: Codable, Sendable, Identifiable {
     }
 }
 
-public enum PolicyError: Error {
+public enum PolicyError: Error, Sendable, Equatable {
     case templateNotFound(String)
     case invalidPolicy(String)
 }
@@ -44,6 +44,39 @@ public struct PolicyLoader: Sendable {
         guard let url = Bundle.module.url(forResource: id, withExtension: "json", subdirectory: "Templates") else {
             throw PolicyError.templateNotFound(id)
         }
-        return try JSONDecoder().decode(Policy.self, from: Data(contentsOf: url))
+        let policy = try JSONDecoder().decode(Policy.self, from: Data(contentsOf: url))
+        try validate(policy)
+        return policy
+    }
+
+    public func loadPolicy(from url: URL) throws -> Policy {
+        let policy = try JSONDecoder().decode(Policy.self, from: Data(contentsOf: url))
+        try validate(policy)
+        return policy
+    }
+
+    public func validate(_ policy: Policy) throws {
+        guard !policy.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw PolicyError.invalidPolicy("id must not be empty")
+        }
+        guard !policy.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw PolicyError.invalidPolicy("displayName must not be empty")
+        }
+        guard (1...3_650).contains(policy.expirationHorizonDays) else {
+            throw PolicyError.invalidPolicy("expirationHorizonDays must be between 1 and 3650")
+        }
+        if let source = policy.namingTemplate {
+            do {
+                _ = try NamingTemplate(source)
+            } catch {
+                throw PolicyError.invalidPolicy("invalid namingTemplate: \(error)")
+            }
+        }
+        let normalizedTaxonomy = policy.folderTaxonomy.map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        }
+        guard !normalizedTaxonomy.contains(""), Set(normalizedTaxonomy).count == normalizedTaxonomy.count else {
+            throw PolicyError.invalidPolicy("folderTaxonomy entries must be non-empty and unique")
+        }
     }
 }

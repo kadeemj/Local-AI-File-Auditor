@@ -2,6 +2,20 @@ import AuditorModels
 import Foundation
 import GRDB
 
+public struct StoredFolderProfile: Codable, Sendable, Equatable {
+    public let path: String
+    public let embedding: [Double]
+    public let description: String?
+    public let updatedAt: Date
+
+    public init(path: String, embedding: [Double], description: String? = nil, updatedAt: Date = Date()) {
+        self.path = path
+        self.embedding = embedding
+        self.description = description
+        self.updatedAt = updatedAt
+    }
+}
+
 /// Owns the SQLite database (GRDB). One writer for the app; in-memory queues for tests.
 /// Extracted document text is never stored — only fingerprints, metadata, and findings.
 public final class AuditorDatabase: Sendable {
@@ -22,6 +36,49 @@ public final class AuditorDatabase: Sendable {
     private init(queue: DatabaseQueue) throws {
         self.writer = queue
         try Self.migrator.migrate(queue)
+    }
+
+    public func saveFolderProfiles(_ profiles: [StoredFolderProfile]) throws {
+        let encoder = JSONEncoder()
+        try writer.write { database in
+            for profile in profiles {
+                guard !profile.path.isEmpty,
+                      !profile.embedding.isEmpty,
+                      profile.embedding.allSatisfy(\.isFinite)
+                else { continue }
+                let embeddingData = try encoder.encode(profile.embedding)
+                try database.execute(
+                    sql: """
+                        INSERT INTO folder_profiles (path, embedding, description, updated_at)
+                        VALUES (?, ?, ?, ?)
+                        ON CONFLICT(path) DO UPDATE SET
+                            embedding = excluded.embedding,
+                            description = excluded.description,
+                            updated_at = excluded.updated_at
+                        """,
+                    arguments: [profile.path, embeddingData, profile.description, profile.updatedAt]
+                )
+            }
+        }
+    }
+
+    public func loadFolderProfiles() throws -> [StoredFolderProfile] {
+        let decoder = JSONDecoder()
+        return try writer.read { database in
+            let rows = try Row.fetchAll(
+                database,
+                sql: "SELECT path, embedding, description, updated_at FROM folder_profiles ORDER BY path"
+            )
+            return try rows.compactMap { row in
+                guard let embeddingData: Data = row["embedding"] else { return nil }
+                return StoredFolderProfile(
+                    path: row["path"],
+                    embedding: try decoder.decode([Double].self, from: embeddingData),
+                    description: row["description"],
+                    updatedAt: row["updated_at"]
+                )
+            }
+        }
     }
 
     static var migrator: DatabaseMigrator {

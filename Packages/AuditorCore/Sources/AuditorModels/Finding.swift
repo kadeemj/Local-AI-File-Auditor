@@ -30,12 +30,36 @@ public enum RecommendedAction: Codable, Sendable, Hashable {
     case review(note: String)
 }
 
+public struct FilenamePolicyViolation: Codable, Sendable, Hashable {
+    public let ruleID: String
+    public let explanation: String
+
+    public init(ruleID: String, explanation: String) {
+        self.ruleID = ruleID
+        self.explanation = explanation
+    }
+}
+
 /// Machine-checkable support for a finding. Grows a case per detector;
 /// the paired `explanation` string on `Finding` is the human-readable side.
 public enum Evidence: Codable, Sendable {
     case duplicateSet(contentHash: String, wastedBytes: Int64)
     case contentDuplicateSet(estimatedSimilarity: Double, wastedBytes: Int64)
     case versionChain(rankedFilenames: [String], stem: String, signals: [String], confidence: Double, judge: JudgeSource)
+    case filenamePolicy(
+        template: String?,
+        violations: [FilenamePolicyViolation],
+        proposedName: String?,
+        judge: JudgeSource?
+    )
+    case misfiled(
+        currentFolder: String,
+        suggestedFolder: String,
+        ownFolderSimilarity: Double,
+        suggestedFolderSimilarity: Double,
+        nearestFiles: [FileRef],
+        explanationJudge: JudgeSource
+    )
     case note(String)
 }
 

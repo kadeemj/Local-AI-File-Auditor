@@ -53,4 +53,31 @@ struct AuditorDatabaseTests {
             }
         }
     }
+
+    @Test("folder profile centroids persist without extracted text")
+    func folderProfilesRoundTrip() throws {
+        let db = try AuditorDatabase.inMemory()
+        let timestamp = Date(timeIntervalSince1970: 1_700_000_000)
+        try db.saveFolderProfiles([
+            StoredFolderProfile(
+                path: "/docs/Finance",
+                embedding: [0.25, 0.5, 0.75],
+                description: "Invoices and budgets",
+                updatedAt: timestamp
+            ),
+        ])
+
+        let profiles = try db.loadFolderProfiles()
+        let profile = try #require(profiles.first)
+        #expect(profile.path == "/docs/Finance")
+        #expect(profile.embedding == [0.25, 0.5, 0.75])
+        #expect(profile.description == "Invoices and budgets")
+        #expect(profile.updatedAt == timestamp)
+
+        try db.saveFolderProfiles([
+            StoredFolderProfile(path: "/docs/Finance", embedding: [1, 0, 0], updatedAt: timestamp),
+        ])
+        let updated = try #require(db.loadFolderProfiles().first)
+        #expect(updated.embedding == [1, 0, 0])
+    }
 }

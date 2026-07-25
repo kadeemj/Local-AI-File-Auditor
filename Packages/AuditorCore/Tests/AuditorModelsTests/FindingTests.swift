@@ -49,4 +49,45 @@ struct FindingTests {
         #expect(decoded.decision == .pending)
         #expect(decoded.files == finding.files)
     }
+
+    @Test("Phase 6 evidence payloads round-trip through persisted JSON")
+    func phaseSixEvidenceCodable() throws {
+        let nearest = FileRef(path: "/tmp/Finance/budget.pdf", size: 200, modifiedAt: Date(timeIntervalSince1970: 2))
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+
+        let filenameEvidence = Evidence.filenamePolicy(
+            template: "YYYY-MM-DD_{DocType}_{Org}_{Status}",
+            violations: [
+                FilenamePolicyViolation(ruleID: "universal.generic-name", explanation: "Generic name."),
+            ],
+            proposedName: "2026-07-25_Report_Org_Approved.pdf",
+            judge: .foundationModel
+        )
+        let decodedFilename = try decoder.decode(Evidence.self, from: encoder.encode(filenameEvidence))
+        guard case .filenamePolicy(let template, let violations, let proposedName, let judge) = decodedFilename else {
+            Issue.record("expected filenamePolicy evidence"); return
+        }
+        #expect(template == "YYYY-MM-DD_{DocType}_{Org}_{Status}")
+        #expect(violations.first?.ruleID == "universal.generic-name")
+        #expect(proposedName == "2026-07-25_Report_Org_Approved.pdf")
+        #expect(judge == .foundationModel)
+
+        let misfiledEvidence = Evidence.misfiled(
+            currentFolder: "/tmp/Governance",
+            suggestedFolder: "/tmp/Finance",
+            ownFolderSimilarity: 0.4,
+            suggestedFolderSimilarity: 0.8,
+            nearestFiles: [nearest],
+            explanationJudge: .rules
+        )
+        let decodedMisfiled = try decoder.decode(Evidence.self, from: encoder.encode(misfiledEvidence))
+        guard case .misfiled(_, let destination, _, let similarity, let nearestFiles, let source) = decodedMisfiled else {
+            Issue.record("expected misfiled evidence"); return
+        }
+        #expect(destination == "/tmp/Finance")
+        #expect(similarity == 0.8)
+        #expect(nearestFiles == [nearest])
+        #expect(source == .rules)
+    }
 }

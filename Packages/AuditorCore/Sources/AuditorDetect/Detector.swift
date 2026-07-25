@@ -1,5 +1,6 @@
 import AuditorHashing
 import AuditorModels
+import AuditorPolicy
 import Foundation
 
 /// Signals a detector needs the engine to compute. The engine only pays for
@@ -24,17 +25,33 @@ public struct DetectionContext: Sendable {
     public let duplicateGroups: [DuplicateGroup]?
     /// Populated (path → fingerprint) when a detector requires `.textContent`.
     public let textFingerprints: [String: TextFingerprint]?
+    /// Transient extracted text. Never written to the scan cache or findings.
+    public let extractedText: [String: String]?
+    /// Transient/persistable sentence vectors keyed by file path.
+    public let documentEmbeddings: [String: [Double]]?
+    /// Folder-name/path/description vectors keyed by absolute folder path.
+    public let folderLabelEmbeddings: [String: [Double]]?
+    /// Active governance policy; nil still enables universal filename rules.
+    public let policy: Policy?
 
     public init(
         scanID: UUID,
         files: [FileRecord],
         duplicateGroups: [DuplicateGroup]? = nil,
-        textFingerprints: [String: TextFingerprint]? = nil
+        textFingerprints: [String: TextFingerprint]? = nil,
+        extractedText: [String: String]? = nil,
+        documentEmbeddings: [String: [Double]]? = nil,
+        folderLabelEmbeddings: [String: [Double]]? = nil,
+        policy: Policy? = nil
     ) {
         self.scanID = scanID
         self.files = files
         self.duplicateGroups = duplicateGroups
         self.textFingerprints = textFingerprints
+        self.extractedText = extractedText
+        self.documentEmbeddings = documentEmbeddings
+        self.folderLabelEmbeddings = folderLabelEmbeddings
+        self.policy = policy
     }
 }
 

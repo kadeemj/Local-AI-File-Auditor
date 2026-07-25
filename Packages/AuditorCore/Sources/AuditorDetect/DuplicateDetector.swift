@@ -21,7 +21,7 @@ public struct DuplicateDetector: Detector {
     private func makeFinding(from group: DuplicateGroup, scanID: UUID) -> Finding? {
         guard group.files.count >= 2 else { return nil }
 
-        let ranked = group.files.sorted { keeperRank($0) < keeperRank($1) }
+        let ranked = group.files.sorted { KeeperRanking.rank($0) < KeeperRanking.rank($1) }
         let keeper = ranked[0]
         let extras = Array(ranked.dropFirst())
         let wasted = extras.reduce(Int64(0)) { $0 + $1.size }
@@ -50,18 +50,4 @@ public struct DuplicateDetector: Detector {
         )
     }
 
-    /// Lower ranks first. Tuple compares penalty, then name length, then age.
-    private func keeperRank(_ record: FileRecord) -> (Int, Int, TimeInterval) {
-        let name = record.filename.lowercased()
-        var penalty = 0
-
-        if name.contains("copy") { penalty += 3 }
-        if name.range(of: #"\(\d+\)"#, options: .regularExpression) != nil { penalty += 3 }
-        for token in ["final", "draft", "old", "new", "backup", "bak"] where name.contains(token) {
-            penalty += 1
-        }
-        if record.path.contains("/Downloads/") { penalty += 4 }
-
-        return (penalty, record.filename.count, record.createdAt?.timeIntervalSince1970 ?? .infinity)
-    }
 }

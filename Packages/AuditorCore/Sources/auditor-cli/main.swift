@@ -101,11 +101,52 @@ var findings: [Finding] = []
 if !dryRunOnly {
     do {
         let groups = try await StagedHashPipeline().duplicateGroups(in: records, rules: rules)
-        let context = DetectionContext(scanID: UUID(), files: records, duplicateGroups: groups)
+
+        // Content fingerprints for text-extractable files (OCR is opt-in via
+        // `extract`, not paid on every bulk scan).
+        var fingerprints: [String: TextFingerprint] = [:]
+        if !arguments.contains("--no-content") {
+            let extractor = DefaultTextExtractor(enableOCRFallback: false)
+            let maxContentBytes: Int64 = 20 << 20
+            let candidates = records.filter { extractor.canExtract(from: $0) && $0.size <= maxContentBytes }
+
+            fingerprints = await withTaskGroup(of: (String, TextFingerprint)?.self) { group in
+                var iterator = candidates.makeIterator()
+                var inFlight = 0
+                var collected: [String: TextFingerprint] = [:]
+                func addNext() {
+                    guard let record = iterator.next() else { return }
+                    inFlight += 1
+                    group.addTask {
+                        guard let extracted = try? await extractor.extractText(from: record),
+                              let fingerprint = TextFingerprint.compute(from: extracted.text)
+                        else { return nil }
+                        return (record.path, fingerprint)
+                    }
+                }
+                for _ in 0..<4 { addNext() }
+                while inFlight > 0, let result = await group.next() {
+                    inFlight -= 1
+                    if let (path, fingerprint) = result { collected[path] = fingerprint }
+                    addNext()
+                }
+                return collected
+            }
+        }
+
+        let context = DetectionContext(
+            scanID: UUID(),
+            files: records,
+            duplicateGroups: groups,
+            textFingerprints: fingerprints.isEmpty ? nil : fingerprints
+        )
+
         findings = try await DuplicateDetector().detect(context: context)
-            .sorted { $0.severity > $1.severity }
+        findings += try await ContentDuplicateDetector().detect(context: context)
+        findings += try await VersionChainDetector().detect(context: context)
+        findings.sort { ($0.severity, $0.confidence) > ($1.severity, $1.confidence) }
     } catch {
-        FileHandle.standardError.write(Data("error during duplicate analysis: \(error)\n".utf8))
+        FileHandle.standardError.write(Data("error during analysis: \(error)\n".utf8))
         exit(1)
     }
 }
@@ -150,14 +191,18 @@ if asJSON {
 
     if !dryRunOnly {
         let totalWasted = findings.reduce(Int64(0)) { total, finding in
-            if case .duplicateSet(_, let wasted) = finding.evidence { return total + wasted }
-            return total
+            switch finding.evidence {
+            case .duplicateSet(_, let wasted), .contentDuplicateSet(_, let wasted):
+                return total + wasted
+            default:
+                return total
+            }
         }
         print("")
-        print("findings: \(findings.count) duplicate sets, \(formatter.string(fromByteCount: totalWasted)) reclaimable")
+        print("findings: \(findings.count) (\(formatter.string(fromByteCount: totalWasted)) reclaimable)")
         for finding in findings {
             print("")
-            print("  [\(finding.severity)] \(finding.explanation)")
+            print("  [\(finding.severity)] (\(finding.kind)) \(finding.explanation)")
             for file in finding.files {
                 print("    - \(file.path)")
             }

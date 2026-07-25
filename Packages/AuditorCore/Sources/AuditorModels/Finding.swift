@@ -34,6 +34,8 @@ public enum RecommendedAction: Codable, Sendable, Hashable {
 /// the paired `explanation` string on `Finding` is the human-readable side.
 public enum Evidence: Codable, Sendable {
     case duplicateSet(contentHash: String, wastedBytes: Int64)
+    case contentDuplicateSet(estimatedSimilarity: Double, wastedBytes: Int64)
+    case versionChain(rankedFilenames: [String], stem: String, signals: [String], confidence: Double, judge: JudgeSource)
     case note(String)
 }
 

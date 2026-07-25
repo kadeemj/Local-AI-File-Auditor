@@ -35,7 +35,13 @@ public struct DefaultTextExtractor: TextExtracting {
         "png": .image, "jpg": .image, "jpeg": .image, "heic": .image, "tif": .image, "tiff": .image,
     ]
 
-    public init() {}
+    /// When false, scanned PDFs yield empty text instead of triggering OCR —
+    /// the right default for bulk scans where OCR cost must be opt-in.
+    let enableOCRFallback: Bool
+
+    public init(enableOCRFallback: Bool = true) {
+        self.enableOCRFallback = enableOCRFallback
+    }
 
     public func canExtract(from record: FileRecord) -> Bool {
         guard !record.isDatalessCloudItem else { return false }
@@ -55,7 +61,7 @@ public struct DefaultTextExtractor: TextExtracting {
         let raw: ExtractedText
         switch strategy {
         case .pdf:
-            raw = try await PDFExtractor().extract(from: record.url)
+            raw = try await PDFExtractor(enableOCRFallback: enableOCRFallback).extract(from: record.url)
         case .docx:
             raw = ExtractedText(text: try DocxExtractor().extract(from: record.url), usedOCR: false)
         case .plainText:

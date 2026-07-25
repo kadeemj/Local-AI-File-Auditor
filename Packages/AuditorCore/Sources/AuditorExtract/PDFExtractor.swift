@@ -6,6 +6,12 @@ import PDFKit
 /// is absent or trivially small — a scanned document — fall back to Vision OCR
 /// on rendered pages, capped at `Limits.maxOCRPages`.
 struct PDFExtractor {
+    let enableOCRFallback: Bool
+
+    init(enableOCRFallback: Bool = true) {
+        self.enableOCRFallback = enableOCRFallback
+    }
+
     func extract(from url: URL) async throws -> ExtractedText {
         guard let document = PDFDocument(url: url) else {
             throw ExtractionError.unreadable(url.path)
@@ -14,6 +20,9 @@ struct PDFExtractor {
         let layerText = (document.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if layerText.count >= DefaultTextExtractor.Limits.minMeaningfulTextLayer {
             return ExtractedText(text: layerText, usedOCR: false)
+        }
+        guard enableOCRFallback else {
+            return ExtractedText(text: "", usedOCR: false)
         }
 
         // Scanned document: render pages and OCR them.

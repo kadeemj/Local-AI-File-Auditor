@@ -22,11 +22,19 @@ public struct DetectionContext: Sendable {
     public let files: [FileRecord]
     /// Populated by the engine when a registered detector requires `.hashes`.
     public let duplicateGroups: [DuplicateGroup]?
+    /// Populated (path → fingerprint) when a detector requires `.textContent`.
+    public let textFingerprints: [String: TextFingerprint]?
 
-    public init(scanID: UUID, files: [FileRecord], duplicateGroups: [DuplicateGroup]? = nil) {
+    public init(
+        scanID: UUID,
+        files: [FileRecord],
+        duplicateGroups: [DuplicateGroup]? = nil,
+        textFingerprints: [String: TextFingerprint]? = nil
+    ) {
         self.scanID = scanID
         self.files = files
         self.duplicateGroups = duplicateGroups
+        self.textFingerprints = textFingerprints
     }
 }
 

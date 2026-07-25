@@ -50,35 +50,52 @@ final class ScanSessionModel {
             state.apply(.failed(.cancelled))
         }
     }
+
+    func setDecision(_ decision: DecisionState, for findingID: UUID) {
+        state.setDecision(decision, for: findingID)
+    }
+
+    func setDecision(_ decision: DecisionState, forFindingIDs ids: [UUID]) {
+        state.setDecision(decision, forFindingIDs: ids)
+    }
 }
 
 enum MockScanStream {
-    /// Deterministic stream for UI development and tests before/without a real folder grant.
-    static func make(findingCount: Int = 5) -> (scanID: UUID, events: AsyncStream<ScanEvent>) {
+    /// Builds a disposable on-disk fixture so mock findings can be approved and applied.
+    static func make(findingCount: Int = 4) throws -> (scanID: UUID, root: URL, events: AsyncStream<ScanEvent>) {
         let scanID = UUID()
-        let (stream, continuation) = AsyncStream.makeStream(of: ScanEvent.self)
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("folderlint-mock-\(UUID().uuidString)", isDirectory: true)
+        let grants = root.appendingPathComponent("Grants", isDirectory: true)
+        let board = root.appendingPathComponent("Board", isDirectory: true)
+        let programs = root.appendingPathComponent("Programs", isDirectory: true)
+        let finance = root.appendingPathComponent("Finance", isDirectory: true)
+        try FileManager.default.createDirectory(at: grants, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: board, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: programs, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: finance, withIntermediateDirectories: true)
 
+        let agreement = grants.appendingPathComponent("Agreement.pdf")
+        let agreementCopy = grants.appendingPathComponent("Agreement copy.pdf")
+        let scanPDF = board.appendingPathComponent("scan001.pdf")
+        let invoice = programs.appendingPathComponent("invoice-april.pdf")
+        let financeSibling = finance.appendingPathComponent("2026-04-01_Invoice_Vendor_Paid.pdf")
+
+        let agreementBytes = Data("%PDF-1.4 mock agreement body".utf8)
+        try agreementBytes.write(to: agreement)
+        try agreementBytes.write(to: agreementCopy)
+        try Data("%PDF-1.4 board minutes scan".utf8).write(to: scanPDF)
+        try Data("%PDF-1.4 invoice april".utf8).write(to: invoice)
+        try Data("%PDF-1.4 paid invoice".utf8).write(to: financeSibling)
+
+        let (stream, continuation) = AsyncStream.makeStream(of: ScanEvent.self)
         Task {
             continuation.yield(.phaseChanged(.enumerating))
-            for filesSeen in [10, 40, 80] {
-                try? await Task.sleep(for: .milliseconds(40))
-                continuation.yield(.progress(ScanProgress(
-                    filesSeen: filesSeen,
-                    bytesHashed: 0,
-                    currentPhase: .enumerating
-                )))
-            }
-
-            continuation.yield(.phaseChanged(.hashing))
-            continuation.yield(.progress(ScanProgress(
-                filesSeen: 80,
-                bytesHashed: 12_000_000,
-                currentPhase: .hashing
-            )))
-            try? await Task.sleep(for: .milliseconds(40))
-
+            continuation.yield(.progress(ScanProgress(filesSeen: 5, bytesHashed: 0, currentPhase: .enumerating)))
+            try? await Task.sleep(for: .milliseconds(30))
             continuation.yield(.phaseChanged(.detecting))
-            let samples = mockFindings(scanID: scanID, count: findingCount)
+
+            let samples = mockFindings(scanID: scanID, root: root, count: findingCount)
             for finding in samples {
                 try? await Task.sleep(for: .milliseconds(20))
                 continuation.yield(.finding(finding))
@@ -86,42 +103,54 @@ enum MockScanStream {
 
             continuation.yield(.completed(ScanSummary(
                 scanID: scanID,
-                filesScanned: 80,
-                totalBytes: 12_000_000,
-                cloudPlaceholders: 2,
+                filesScanned: 5,
+                totalBytes: 200,
+                cloudPlaceholders: 0,
                 findingsCount: samples.count,
-                duration: 0.35
+                duration: 0.2
             )))
             continuation.finish()
         }
 
-        return (scanID, stream)
+        return (scanID, root, stream)
     }
 
-    private static func mockFindings(scanID: UUID, count: Int) -> [Finding] {
-        let templates: [(Severity, String, RecommendedAction, Evidence)] = [
+    private static func mockFindings(scanID: UUID, root: URL, count: Int) -> [Finding] {
+        func ref(_ url: URL) -> FileRef {
+            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+            return FileRef(
+                path: url.path,
+                size: (attrs?[.size] as? NSNumber)?.int64Value ?? 0,
+                modifiedAt: (attrs?[.modificationDate] as? Date) ?? Date()
+            )
+        }
+
+        let agreement = ref(root.appendingPathComponent("Grants/Agreement.pdf"))
+        let agreementCopy = ref(root.appendingPathComponent("Grants/Agreement copy.pdf"))
+        let scanPDF = ref(root.appendingPathComponent("Board/scan001.pdf"))
+        let invoice = ref(root.appendingPathComponent("Programs/invoice-april.pdf"))
+        let financeSibling = ref(root.appendingPathComponent("Finance/2026-04-01_Invoice_Vendor_Paid.pdf"))
+        let financeFolder = root.appendingPathComponent("Finance").path
+
+        let templates: [(Severity, String, RecommendedAction, Evidence, [FileRef])] = [
             (
                 .high,
                 "Two files share identical content.",
-                .keepCanonical(
-                    keep: FileRef(path: "/Grants/Agreement.pdf", size: 100, modifiedAt: Date()),
-                    archive: [FileRef(path: "/Grants/Agreement copy.pdf", size: 100, modifiedAt: Date())]
-                ),
-                .duplicateSet(contentHash: "abc", wastedBytes: 100)
+                .keepCanonical(keep: agreement, archive: [agreementCopy]),
+                .duplicateSet(contentHash: "mock-hash", wastedBytes: agreementCopy.size),
+                [agreement, agreementCopy]
             ),
             (
                 .medium,
                 "Filename does not match the active naming template.",
-                .rename(
-                    file: FileRef(path: "/Board/scan001.pdf", size: 50, modifiedAt: Date()),
-                    proposedName: "2026-03-01_Minutes_Board_Draft.pdf"
-                ),
+                .rename(file: scanPDF, proposedName: "2026-03-01_Minutes_Board_Draft.pdf"),
                 .filenamePolicy(
                     template: "YYYY-MM-DD_{DocType}_{Org}_{Status}",
                     violations: [.init(ruleID: "genericName", explanation: "Generic scanner name")],
                     proposedName: "2026-03-01_Minutes_Board_Draft.pdf",
                     judge: .rules
-                )
+                ),
+                [scanPDF]
             ),
             (
                 .high,
@@ -134,59 +163,39 @@ enum MockScanStream {
                     autoRenews: true,
                     noticePeriodDays: 60,
                     party: "Acme Vendor",
-                    contextSnippet: "…shall automatically renew for successive one-year terms unless either party provides sixty (60) days written notice…",
+                    contextSnippet: "…shall automatically renew unless either party provides sixty (60) days written notice…",
                     judge: .rules
-                )
+                ),
+                [agreement]
             ),
             (
                 .medium,
                 "Document looks closer to Finance than its current folder.",
-                .move(
-                    file: FileRef(path: "/Programs/invoice-april.pdf", size: 40, modifiedAt: Date()),
-                    destinationFolder: "/Finance"
-                ),
+                .move(file: invoice, destinationFolder: financeFolder),
                 .misfiled(
-                    currentFolder: "/Programs",
-                    suggestedFolder: "/Finance",
+                    currentFolder: root.appendingPathComponent("Programs").path,
+                    suggestedFolder: financeFolder,
                     ownFolderSimilarity: 0.21,
                     suggestedFolderSimilarity: 0.78,
-                    nearestFiles: [
-                        FileRef(path: "/Finance/2026-04-01_Invoice_Vendor_Paid.pdf", size: 40, modifiedAt: Date()),
-                    ],
+                    nearestFiles: [financeSibling],
                     explanationJudge: .rules
-                )
-            ),
-            (
-                .low,
-                "Version family detected; keep the highest-ranked copy.",
-                .keepCanonical(
-                    keep: FileRef(path: "/Policies/Handbook_v3_FINAL.pdf", size: 200, modifiedAt: Date()),
-                    archive: [FileRef(path: "/Policies/Handbook_v2.pdf", size: 180, modifiedAt: Date())]
                 ),
-                .versionChain(
-                    rankedFilenames: ["Handbook_v3_FINAL.pdf", "Handbook_v2.pdf"],
-                    stem: "Handbook",
-                    signals: ["explicit version", "status word"],
-                    confidence: 0.91,
-                    judge: .rules
-                )
+                [invoice]
             ),
         ]
 
-        return (0..<count).map { index in
-            let sample = templates[index % templates.count]
-            let path = "/Mock/file-\(index).pdf"
-            let file = FileRef(path: path, size: Int64(100 + index), modifiedAt: Date())
+        return (0..<min(count, templates.count)).map { index in
+            let sample = templates[index]
             return Finding(
                 detectorID: "mock",
                 kind: "mock.finding.\(index)",
                 severity: sample.0,
-                files: [file],
+                files: sample.4,
                 evidence: sample.3,
                 explanation: sample.1,
                 recommendation: sample.2,
                 confidence: 0.9,
-                stableKeyMaterial: "mock-\(index)",
+                stableKeyMaterial: "mock-\(index)-\(root.lastPathComponent)",
                 scanID: scanID
             )
         }

@@ -49,7 +49,10 @@ struct DashboardView: View {
                 Button("Scan Folders") { appModel.startScan() }
                     .keyboardShortcut("r", modifiers: [.command])
                 Button("Mock Scan") { appModel.startScan(useMock: true) }
-                    .help("Deterministic AsyncStream for UI development")
+                    .help("Disposable on-disk fixture with apply-ready findings")
+            }
+            if !appModel.scanSession.state.actionableApprovedFindings.isEmpty {
+                Button("Review Apply") { appModel.selectedSidebar = .apply }
             }
         }
     }

@@ -12,7 +12,9 @@
 		1161D04296FD4605EFB56564 /* AuditorEngine in Frameworks */ = {isa = PBXBuildFile; productRef = B5C9559CF1F4C67DAFF8FD9C /* AuditorEngine */; };
 		24ADED05DD7697739901B1A9 /* BookmarkAndSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DC5CFBB44D3B613C4C4664 /* BookmarkAndSessionTests.swift */; };
 		2EAA6688F72C60F4D93A145A /* FindingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F03577AAABDAC7CB9F5834C /* FindingsViews.swift */; };
+		32530AC6324E2B52CE760104 /* ApplyReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2199F02CCF19521D1FD606E1 /* ApplyReviewView.swift */; };
 		3BED491590DCFC76FC232AE2 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEDE03774D1C4E6F58042153 /* AppModel.swift */; };
+		4DC86BAED58F41828A011A1D /* QuickLookPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */; };
 		55312FC37E7B22397DAD7764 /* AuditorStore in Frameworks */ = {isa = PBXBuildFile; productRef = 3588A6F2070FC42C179AD12B /* AuditorStore */; };
 		6CA2C3B51BAB0A2D3B165FE6 /* PlaceholderFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D1CDBF3517F30A2BCB7801 /* PlaceholderFeatureView.swift */; };
 		6D509F67F0B22BF7B47591CE /* NetworkClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E29C8C1A8B7D5D68B94CC6 /* NetworkClient.swift */; };
@@ -21,10 +23,12 @@
 		8CB9590E0E81206E9B1DC08F /* FolderAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A6F4ECDCE4F098561C1E2B /* FolderAccessManager.swift */; };
 		958A7E74261E05C46460C189 /* PolicyPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E4D27DBABA6CC53881ADA7 /* PolicyPicker.swift */; };
 		9C2A34ACEAB9E4F8A387B7D2 /* AuditorPolicy in Frameworks */ = {isa = PBXBuildFile; productRef = 75EABAD5B28A35D341E96EDE /* AuditorPolicy */; };
+		A6BA6ACE80BAC9C56C52F034 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5FC20E0F1F1407CE436834 /* HistoryView.swift */; };
 		B9053C74D6736F418200BE87 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6AC7054D4F2EA8CC34CD7D /* AppPreferences.swift */; };
 		C68AF1C8B95CEB6D9B769DF8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F0EB76391D526CA32F73345 /* DashboardView.swift */; };
 		D165F36C742651F890E190FB /* AuditorModels in Frameworks */ = {isa = PBXBuildFile; productRef = DADBD4D73E321D893CE3E938 /* AuditorModels */; };
 		D9B889233E3B06553EF49C08 /* SecurityScopedBookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D55E020B72B43A96081C71 /* SecurityScopedBookmark.swift */; };
+		E11CFF1450C0FFC492E75EA0 /* AuditorApply in Frameworks */ = {isa = PBXBuildFile; productRef = DD25C42F9FF37DE5146821D5 /* AuditorApply */; };
 		FCD15E23FB9D3EAD02711E61 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5620F0223B14C84549A8ABE7 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -44,8 +48,11 @@
 		19D1CDBF3517F30A2BCB7801 /* PlaceholderFeatureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderFeatureView.swift; sourceTree = "<group>"; };
 		1F679EC901A52D8B4B1068AF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		205E3A5CA6FE27A83A4DE113 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		2199F02CCF19521D1FD606E1 /* ApplyReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyReviewView.swift; sourceTree = "<group>"; };
 		22E4D27DBABA6CC53881ADA7 /* PolicyPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolicyPicker.swift; sourceTree = "<group>"; };
+		2B5FC20E0F1F1407CE436834 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		2D6B5DE91D672D090E1AB28A /* FolderLint.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FolderLint.entitlements; sourceTree = "<group>"; };
+		45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPresenter.swift; sourceTree = "<group>"; };
 		53DC5CFBB44D3B613C4C4664 /* BookmarkAndSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkAndSessionTests.swift; sourceTree = "<group>"; };
 		5620F0223B14C84549A8ABE7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6F03577AAABDAC7CB9F5834C /* FindingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindingsViews.swift; sourceTree = "<group>"; };
@@ -72,6 +79,7 @@
 				D165F36C742651F890E190FB /* AuditorModels in Frameworks */,
 				9C2A34ACEAB9E4F8A387B7D2 /* AuditorPolicy in Frameworks */,
 				55312FC37E7B22397DAD7764 /* AuditorStore in Frameworks */,
+				E11CFF1450C0FFC492E75EA0 /* AuditorApply in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,6 +115,14 @@
 			path = SettingsScene;
 			sourceTree = "<group>";
 		};
+		17FBD8CF150A5117EF3973D2 /* ApplyReview */ = {
+			isa = PBXGroup;
+			children = (
+				2199F02CCF19521D1FD606E1 /* ApplyReviewView.swift */,
+			);
+			path = ApplyReview;
+			sourceTree = "<group>";
+		};
 		2E1DEBC5884AAE575131CC74 /* FolderLintTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -130,7 +146,9 @@
 		40CD9CB06F23340D595890B1 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				17FBD8CF150A5117EF3973D2 /* ApplyReview */,
 				E6B5935F064121E73EFD8EDD /* Dashboard */,
+				82F56FEF8CBC9E3ADE9ABD35 /* History */,
 				FD7FE28DB7F21331B3CC2CF3 /* Onboarding */,
 				B14A9E25B6E5E42DEE6A199C /* Results */,
 				162EA73D6DEF65C177DC1C95 /* SettingsScene */,
@@ -146,6 +164,14 @@
 				11D55E020B72B43A96081C71 /* SecurityScopedBookmark.swift */,
 			);
 			path = Folders;
+			sourceTree = "<group>";
+		};
+		82F56FEF8CBC9E3ADE9ABD35 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				2B5FC20E0F1F1407CE436834 /* HistoryView.swift */,
+			);
+			path = History;
 			sourceTree = "<group>";
 		};
 		9D13253A60C2F7BA9B6B0F93 /* Shared */ = {
@@ -218,6 +244,7 @@
 			isa = PBXGroup;
 			children = (
 				FC6AC7054D4F2EA8CC34CD7D /* AppPreferences.swift */,
+				45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */,
 				5338AFEE3FB2DF3C0B53BD7F /* Folders */,
 				B7F1215B0705D62B9580CDD0 /* Network */,
 				DFB171B5DFD820DE1FE245DC /* Scanning */,
@@ -273,6 +300,7 @@
 				DADBD4D73E321D893CE3E938 /* AuditorModels */,
 				75EABAD5B28A35D341E96EDE /* AuditorPolicy */,
 				3588A6F2070FC42C179AD12B /* AuditorStore */,
+				DD25C42F9FF37DE5146821D5 /* AuditorApply */,
 			);
 			productName = FolderLint;
 			productReference = DB72728E339F34A07A68F90D /* FolderLint.app */;
@@ -355,14 +383,17 @@
 			files = (
 				3BED491590DCFC76FC232AE2 /* AppModel.swift in Sources */,
 				B9053C74D6736F418200BE87 /* AppPreferences.swift in Sources */,
+				32530AC6324E2B52CE760104 /* ApplyReviewView.swift in Sources */,
 				C68AF1C8B95CEB6D9B769DF8 /* DashboardView.swift in Sources */,
 				2EAA6688F72C60F4D93A145A /* FindingsViews.swift in Sources */,
 				8CB9590E0E81206E9B1DC08F /* FolderAccessManager.swift in Sources */,
 				742E7092B1F99BF29AF5403D /* FolderLintApp.swift in Sources */,
+				A6BA6ACE80BAC9C56C52F034 /* HistoryView.swift in Sources */,
 				6D509F67F0B22BF7B47591CE /* NetworkClient.swift in Sources */,
 				73A7C26B58D668C66C81D69F /* OnboardingView.swift in Sources */,
 				6CA2C3B51BAB0A2D3B165FE6 /* PlaceholderFeatureView.swift in Sources */,
 				958A7E74261E05C46460C189 /* PolicyPicker.swift in Sources */,
+				4DC86BAED58F41828A011A1D /* QuickLookPresenter.swift in Sources */,
 				0C1BBDC7260F9D46D9137720 /* RootView.swift in Sources */,
 				01B5C5A66003D7F69DB6DD49 /* ScanSessionModel.swift in Sources */,
 				D9B889233E3B06553EF49C08 /* SecurityScopedBookmark.swift in Sources */,
@@ -619,6 +650,10 @@
 		DADBD4D73E321D893CE3E938 /* AuditorModels */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AuditorModels;
+		};
+		DD25C42F9FF37DE5146821D5 /* AuditorApply */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AuditorApply;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

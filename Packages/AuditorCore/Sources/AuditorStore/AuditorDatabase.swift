@@ -37,6 +37,75 @@ public struct StoredWatchedFolder: Codable, Sendable, Equatable {
     }
 }
 
+/// One journaled file operation. Written before any rename/move so undo can
+/// restore the prior tree. FolderLint never deletes — undo is always a reverse move.
+public struct StoredJournalEntry: Codable, Sendable, Equatable, Identifiable {
+    public var id: String { "\(batchID.uuidString):\(originalPath)→\(newPath):\(performedAt.timeIntervalSince1970)" }
+
+    public let rowID: Int64?
+    public let batchID: UUID
+    public let findingID: UUID
+    public let operation: String
+    public let originalPath: String
+    public let newPath: String
+    public let originalSize: Int64?
+    public let originalMtimeNanoseconds: Int64?
+    public let newSize: Int64?
+    public let newMtimeNanoseconds: Int64?
+    public let performedAt: Date
+    public let undoneAt: Date?
+
+    public init(
+        rowID: Int64? = nil,
+        batchID: UUID,
+        findingID: UUID,
+        operation: String,
+        originalPath: String,
+        newPath: String,
+        originalSize: Int64? = nil,
+        originalMtimeNanoseconds: Int64? = nil,
+        newSize: Int64? = nil,
+        newMtimeNanoseconds: Int64? = nil,
+        performedAt: Date,
+        undoneAt: Date? = nil
+    ) {
+        self.rowID = rowID
+        self.batchID = batchID
+        self.findingID = findingID
+        self.operation = operation
+        self.originalPath = originalPath
+        self.newPath = newPath
+        self.originalSize = originalSize
+        self.originalMtimeNanoseconds = originalMtimeNanoseconds
+        self.newSize = newSize
+        self.newMtimeNanoseconds = newMtimeNanoseconds
+        self.performedAt = performedAt
+        self.undoneAt = undoneAt
+    }
+
+    public var isUndone: Bool { undoneAt != nil }
+}
+
+/// Summary of an apply batch for History UI.
+public struct StoredApplyBatch: Codable, Sendable, Equatable, Identifiable {
+    public var id: UUID { batchID }
+    public let batchID: UUID
+    public let performedAt: Date
+    public let undoneAt: Date?
+    public let operationCount: Int
+    public let entries: [StoredJournalEntry]
+
+    public init(batchID: UUID, performedAt: Date, undoneAt: Date?, operationCount: Int, entries: [StoredJournalEntry]) {
+        self.batchID = batchID
+        self.performedAt = performedAt
+        self.undoneAt = undoneAt
+        self.operationCount = operationCount
+        self.entries = entries
+    }
+
+    public var isUndone: Bool { undoneAt != nil }
+}
+
 /// Owns the SQLite database (GRDB). One writer for the app; in-memory queues for tests.
 /// Extracted document text is never stored — only fingerprints, metadata, and findings.
 public final class AuditorDatabase: Sendable {
@@ -158,6 +227,137 @@ public final class AuditorDatabase: Sendable {
         }
     }
 
+    public func insertJournalEntries(_ entries: [StoredJournalEntry]) throws {
+        try writer.write { database in
+            for entry in entries {
+                try database.execute(
+                    sql: """
+                        INSERT INTO apply_journal (
+                            batch_id, finding_id, operation, original_path, new_path,
+                            original_size, original_mtime_ns, new_size, new_mtime_ns,
+                            performed_at, undone_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                    arguments: [
+                        entry.batchID.uuidString,
+                        entry.findingID.uuidString,
+                        entry.operation,
+                        entry.originalPath,
+                        entry.newPath,
+                        entry.originalSize,
+                        entry.originalMtimeNanoseconds,
+                        entry.newSize,
+                        entry.newMtimeNanoseconds,
+                        entry.performedAt,
+                        entry.undoneAt,
+                    ]
+                )
+            }
+        }
+    }
+
+    public func updateJournalNewState(
+        batchID: UUID,
+        originalPath: String,
+        newSize: Int64,
+        newMtimeNanoseconds: Int64
+    ) throws {
+        try writer.write { database in
+            try database.execute(
+                sql: """
+                    UPDATE apply_journal
+                    SET new_size = ?, new_mtime_ns = ?
+                    WHERE batch_id = ? AND original_path = ? AND undone_at IS NULL
+                    """,
+                arguments: [newSize, newMtimeNanoseconds, batchID.uuidString, originalPath]
+            )
+        }
+    }
+
+    public func loadJournalEntries(batchID: UUID) throws -> [StoredJournalEntry] {
+        try writer.read { database in
+            let rows = try Row.fetchAll(
+                database,
+                sql: """
+                    SELECT id, batch_id, finding_id, operation, original_path, new_path,
+                           original_size, original_mtime_ns, new_size, new_mtime_ns,
+                           performed_at, undone_at
+                    FROM apply_journal
+                    WHERE batch_id = ?
+                    ORDER BY id ASC
+                    """,
+                arguments: [batchID.uuidString]
+            )
+            return try rows.map(Self.journalEntry(from:))
+        }
+    }
+
+    public func loadApplyBatches() throws -> [StoredApplyBatch] {
+        try writer.read { database in
+            let rows = try Row.fetchAll(
+                database,
+                sql: """
+                    SELECT id, batch_id, finding_id, operation, original_path, new_path,
+                           original_size, original_mtime_ns, new_size, new_mtime_ns,
+                           performed_at, undone_at
+                    FROM apply_journal
+                    ORDER BY performed_at DESC, id ASC
+                    """
+            )
+            let entries = try rows.map(Self.journalEntry(from:))
+            let grouped = Dictionary(grouping: entries, by: \.batchID)
+            return grouped.values
+                .map { batchEntries in
+                    let sorted = batchEntries.sorted { ($0.rowID ?? 0) < ($1.rowID ?? 0) }
+                    return StoredApplyBatch(
+                        batchID: sorted[0].batchID,
+                        performedAt: sorted[0].performedAt,
+                        undoneAt: sorted.allSatisfy(\.isUndone)
+                            ? sorted.compactMap(\.undoneAt).max()
+                            : nil,
+                        operationCount: sorted.count,
+                        entries: sorted
+                    )
+                }
+                .sorted { $0.performedAt > $1.performedAt }
+        }
+    }
+
+    public func markBatchUndone(_ batchID: UUID, at date: Date) throws {
+        try writer.write { database in
+            try database.execute(
+                sql: """
+                    UPDATE apply_journal
+                    SET undone_at = ?
+                    WHERE batch_id = ? AND undone_at IS NULL
+                    """,
+                arguments: [date, batchID.uuidString]
+            )
+        }
+    }
+
+    private static func journalEntry(from row: Row) throws -> StoredJournalEntry {
+        guard let batch = UUID(uuidString: row["batch_id"]),
+              let finding = UUID(uuidString: row["finding_id"])
+        else {
+            throw AuditorStoreError.invalidJournalUUID
+        }
+        return StoredJournalEntry(
+            rowID: row["id"],
+            batchID: batch,
+            findingID: finding,
+            operation: row["operation"],
+            originalPath: row["original_path"],
+            newPath: row["new_path"],
+            originalSize: row["original_size"],
+            originalMtimeNanoseconds: row["original_mtime_ns"],
+            newSize: row["new_size"],
+            newMtimeNanoseconds: row["new_mtime_ns"],
+            performedAt: row["performed_at"],
+            undoneAt: row["undone_at"]
+        )
+    }
+
     static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
 
@@ -219,6 +419,20 @@ public final class AuditorDatabase: Sendable {
             }
         }
 
+        migrator.registerMigration("v2_apply_journal_metadata") { db in
+            try db.alter(table: "apply_journal") { t in
+                t.add(column: "original_size", .integer)
+                t.add(column: "original_mtime_ns", .integer)
+                t.add(column: "new_size", .integer)
+                t.add(column: "new_mtime_ns", .integer)
+                t.add(column: "original_bookmark", .blob)
+            }
+        }
+
         return migrator
     }
+}
+
+public enum AuditorStoreError: Error, Sendable, Equatable {
+    case invalidJournalUUID
 }

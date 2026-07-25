@@ -23,9 +23,10 @@ struct SecurityScopedBookmarkTests {
 @MainActor
 struct ScanSessionModelTests {
     @Test("consumes a mock AsyncStream into findings")
-    func consumesMockStream() async {
+    func consumesMockStream() async throws {
         let model = ScanSessionModel()
-        let mock = MockScanStream.make(findingCount: 3)
+        let mock = try MockScanStream.make(findingCount: 3)
+        defer { try? FileManager.default.removeItem(at: mock.root) }
         model.start(events: mock.events, scanID: mock.scanID)
 
         for _ in 0..<50 {
@@ -37,5 +38,20 @@ struct ScanSessionModelTests {
         #expect(model.findings.count == 3)
         #expect(model.summary?.findingsCount == 3)
         #expect(model.error == nil)
+    }
+
+    @Test("approve decision updates session state")
+    func approveDecision() async throws {
+        let model = ScanSessionModel()
+        let mock = try MockScanStream.make(findingCount: 1)
+        defer { try? FileManager.default.removeItem(at: mock.root) }
+        model.start(events: mock.events, scanID: mock.scanID)
+        for _ in 0..<50 {
+            if !model.isRunning, !model.findings.isEmpty { break }
+            try? await Task.sleep(for: .milliseconds(40))
+        }
+        let finding = try #require(model.findings.first)
+        model.setDecision(.approved, for: finding.id)
+        #expect(model.findings.first?.decision == .approved)
     }
 }

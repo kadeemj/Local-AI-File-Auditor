@@ -31,6 +31,8 @@ targets:
         product: AuditorPolicy
       - package: AuditorCore
         product: AuditorStore
+      - package: AuditorCore
+        product: AuditorApply
     settings:
       base:
         INFOPLIST_FILE: FolderLint/Info.plist

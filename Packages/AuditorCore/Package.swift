@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "AuditorModels", targets: ["AuditorModels"]),
         .library(name: "AuditorPolicy", targets: ["AuditorPolicy"]),
         .library(name: "AuditorStore", targets: ["AuditorStore"]),
+        .library(name: "AuditorApply", targets: ["AuditorApply"]),
         .executable(name: "auditor-cli", targets: ["auditor-cli"]),
     ],
     dependencies: [
@@ -86,6 +87,11 @@ let package = Package(
         ]),
         .testTarget(name: "AuditorDetectTests", dependencies: ["AuditorDetect", "AuditorHashing", "AuditorTestSupport"]),
         .testTarget(name: "AuditorStoreTests", dependencies: ["AuditorStore"]),
+        .testTarget(name: "AuditorApplyTests", dependencies: [
+            "AuditorApply",
+            "AuditorStore",
+            "AuditorTestSupport",
+        ]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),
         // Engine orchestration + EventKit export tests.
         .testTarget(name: "AuditorEngineTests", dependencies: [

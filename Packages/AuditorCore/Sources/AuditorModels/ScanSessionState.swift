@@ -74,6 +74,36 @@ public struct ScanSessionState: Sendable {
             return false
         }
     }
+
+    public var approvedFindings: [Finding] {
+        findings.filter { $0.decision == .approved }
+    }
+
+    public var actionableApprovedFindings: [Finding] {
+        approvedFindings.filter(\.recommendation.isFileMutation)
+    }
+
+    public mutating func setDecision(_ decision: DecisionState, for findingID: UUID) {
+        guard let index = findings.firstIndex(where: { $0.id == findingID }) else { return }
+        findings[index].decision = decision
+    }
+
+    public mutating func setDecision(_ decision: DecisionState, forFindingIDs ids: [UUID]) {
+        let idSet = Set(ids)
+        for index in findings.indices where idSet.contains(findings[index].id) {
+            findings[index].decision = decision
+        }
+    }
+}
+
+extension RecommendedAction {
+    /// Whether applying this recommendation mutates files (rename/move/archive).
+    public var isFileMutation: Bool {
+        switch self {
+        case .rename, .move, .keepCanonical: true
+        case .scheduleReminder, .review: false
+        }
+    }
 }
 
 extension ScanError: Equatable {

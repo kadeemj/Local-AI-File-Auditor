@@ -61,12 +61,10 @@ struct MainSplitView: View {
             RenamesListView()
         case .expirations:
             ExpirationsListView()
+        case .apply:
+            ApplyReviewView()
         case .history:
-            PlaceholderFeatureView(
-                title: "History",
-                systemImage: "clock.arrow.circlepath",
-                message: "Apply journal and undo history arrive in Phase 9."
-            )
+            HistoryView()
         case .reports:
             PlaceholderFeatureView(
                 title: "Reports",

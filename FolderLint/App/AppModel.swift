@@ -1,3 +1,4 @@
+import AuditorApply
 import AuditorEngine
 import AuditorModels
 import AuditorPolicy
@@ -14,6 +15,7 @@ final class AppModel {
         case findings
         case renames
         case expirations
+        case apply
         case history
         case reports
 
@@ -25,6 +27,7 @@ final class AppModel {
             case .findings: "Findings"
             case .renames: "Renames"
             case .expirations: "Expirations"
+            case .apply: "Apply"
             case .history: "History"
             case .reports: "Reports"
             }
@@ -36,6 +39,7 @@ final class AppModel {
             case .findings: "list.bullet.rectangle"
             case .renames: "pencil"
             case .expirations: "calendar.badge.exclamationmark"
+            case .apply: "checkmark.seal"
             case .history: "clock.arrow.circlepath"
             case .reports: "doc.richtext"
             }
@@ -44,6 +48,7 @@ final class AppModel {
 
     let database: AuditorDatabase
     let engine: AuditorEngine
+    let applyEngine: ApplyEngine
     let folders: FolderAccessManager
     let scanSession: ScanSessionModel
 
@@ -52,6 +57,10 @@ final class AppModel {
     var selectedPolicyID: String?
     var availablePolicies: [Policy] = []
     var statusMessage: String?
+    var applyBatches: [StoredApplyBatch] = []
+    var draftPlan: ApplyPlan?
+    /// Retained so mock-scan fixture trees stay on disk for apply/undo dogfooding.
+    private(set) var mockFixtureRoot: URL?
 
     init(
         database: AuditorDatabase? = nil,
@@ -66,11 +75,13 @@ final class AppModel {
         }
         self.database = db
         self.engine = engine ?? AuditorEngine(database: db)
+        self.applyEngine = ApplyEngine(database: db)
         self.folders = FolderAccessManager(database: db)
         self.scanSession = ScanSessionModel()
         self.needsOnboarding = skipOnboardingForPreviews ? false : !AppPreferences.didCompleteOnboarding
         self.selectedPolicyID = AppPreferences.activePolicyID
         self.availablePolicies = Self.loadBundledPolicies()
+        reloadHistory()
     }
 
     var selectedPolicy: Policy? {
@@ -92,11 +103,20 @@ final class AppModel {
     func startScan(useMock: Bool? = nil) {
         let mock = useMock ?? AppPreferences.useMockScan
         statusMessage = nil
+        draftPlan = nil
 
         if mock {
-            let mock = MockScanStream.make()
-            scanSession.start(events: mock.events, scanID: mock.scanID)
-            statusMessage = "Running mock scan…"
+            do {
+                if let previous = mockFixtureRoot {
+                    try? FileManager.default.removeItem(at: previous)
+                }
+                let mock = try MockScanStream.make()
+                mockFixtureRoot = mock.root
+                scanSession.start(events: mock.events, scanID: mock.scanID)
+                statusMessage = "Running mock scan on disposable fixture…"
+            } catch {
+                statusMessage = "Unable to build mock fixture: \(error.localizedDescription)"
+            }
             return
         }
 
@@ -138,7 +158,6 @@ final class AppModel {
             scanSession.start(using: handle)
             statusMessage = "Scanning \(rootPaths.count) folder\(rootPaths.count == 1 ? "" : "s")…"
 
-            // Keep security scopes alive for the duration of the scan.
             while scanSession.isRunning {
                 try? await Task.sleep(for: .milliseconds(200))
             }
@@ -154,6 +173,105 @@ final class AppModel {
     func cancelScan() {
         scanSession.cancel()
         statusMessage = "Scan cancelled."
+    }
+
+    func approve(_ finding: Finding) {
+        guard finding.decision == .pending || finding.decision == .dismissed else { return }
+        scanSession.setDecision(.approved, for: finding.id)
+        refreshDraftPlan()
+        statusMessage = "Approved — review the Apply tab before changing files."
+    }
+
+    func dismiss(_ finding: Finding) {
+        guard finding.decision == .pending || finding.decision == .approved else { return }
+        scanSession.setDecision(.dismissed, for: finding.id)
+        refreshDraftPlan()
+        statusMessage = "Finding dismissed."
+    }
+
+    func resetDecision(_ finding: Finding) {
+        guard finding.decision == .approved || finding.decision == .dismissed else { return }
+        scanSession.setDecision(.pending, for: finding.id)
+        refreshDraftPlan()
+    }
+
+    func refreshDraftPlan() {
+        let approved = scanSession.state.actionableApprovedFindings
+        draftPlan = approved.isEmpty ? nil : applyEngine.plan(findings: approved)
+    }
+
+    func applyApproved() {
+        refreshDraftPlan()
+        guard let plan = draftPlan else {
+            statusMessage = "No approved file changes to apply."
+            return
+        }
+        guard plan.isAppliable else {
+            statusMessage = "Resolve \(plan.conflicts.count) conflict\(plan.conflicts.count == 1 ? "" : "s") before applying."
+            selectedSidebar = .apply
+            return
+        }
+
+        let tokens = beginAccessForPaths(plan.operations.flatMap { [$0.originalPath, $0.newPath] })
+        defer { tokens.forEach { $0.end() } }
+
+        do {
+            let result = try applyEngine.apply(plan)
+            scanSession.setDecision(.applied, forFindingIDs: result.findingIDs)
+            draftPlan = nil
+            reloadHistory()
+            statusMessage = "Applied \(result.appliedOperations.count) change\(result.appliedOperations.count == 1 ? "" : "s"). Undo from History."
+            selectedSidebar = .history
+        } catch {
+            statusMessage = "Apply failed: \(error)"
+        }
+    }
+
+    func undoBatch(_ batch: StoredApplyBatch) {
+        guard !batch.isUndone else { return }
+        let tokens = beginAccessForPaths(batch.entries.flatMap { [$0.originalPath, $0.newPath] })
+        defer { tokens.forEach { $0.end() } }
+
+        do {
+            try applyEngine.undo(batchID: batch.batchID)
+            let findingIDs = batch.entries.map(\.findingID)
+            scanSession.setDecision(.undone, forFindingIDs: findingIDs)
+            reloadHistory()
+            statusMessage = "Undid batch of \(batch.operationCount) change\(batch.operationCount == 1 ? "" : "s")."
+        } catch {
+            statusMessage = "Undo failed: \(error)"
+        }
+    }
+
+    func reloadHistory() {
+        applyBatches = (try? database.loadApplyBatches()) ?? []
+    }
+
+    func previewFile(at path: String) {
+        let url = URL(fileURLWithPath: path)
+        let tokens = beginAccessForPaths([path])
+        // Keep scope alive briefly while Quick Look loads; panel retains the URL.
+        QuickLookPresenter.preview(url: url)
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            tokens.forEach { $0.end() }
+        }
+    }
+
+    private func beginAccessForPaths(_ paths: [String]) -> [FolderAccessManager.AccessToken] {
+        var tokens: [FolderAccessManager.AccessToken] = []
+        // Mock fixtures live outside sandbox grants; security-scope begin is best-effort.
+        for folder in folders.folders where !folder.isStale {
+            let folderPath = folder.path.hasSuffix("/") ? folder.path : folder.path + "/"
+            let touchesFolder = paths.contains { path in
+                path == folder.path || path.hasPrefix(folderPath)
+            }
+            guard touchesFolder else { continue }
+            if let token = try? folders.beginAccess(to: folder) {
+                tokens.append(token)
+            }
+        }
+        return tokens
     }
 
     private static func openApplicationDatabase() throws -> AuditorDatabase {

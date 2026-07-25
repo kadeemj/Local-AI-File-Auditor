@@ -26,7 +26,8 @@ struct FindingsListView: View {
             .frame(minWidth: 320)
 
             Group {
-                if let finding = filtered.first(where: { $0.id == selectedID }) ?? filtered.first {
+                if let finding = filtered.first(where: { $0.id == selectedID })
+                    ?? filtered.first {
                     FindingDetailView(finding: finding)
                 } else {
                     ContentUnavailableView(
@@ -123,6 +124,9 @@ struct FindingRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 SeverityBadge(severity: finding.severity)
+                Text(finding.decision.rawValue.capitalized)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
                 Text(finding.kind)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -147,24 +151,29 @@ struct FindingRowView: View {
 }
 
 struct FindingDetailView: View {
+    @Environment(AppModel.self) private var appModel
     let finding: Finding
+
+    private var liveFinding: Finding {
+        appModel.scanSession.findings.first(where: { $0.id == finding.id }) ?? finding
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    SeverityBadge(severity: finding.severity)
-                    Text(finding.kind)
+                    SeverityBadge(severity: liveFinding.severity)
+                    Text(liveFinding.kind)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(finding.decision.rawValue.capitalized)
+                    Text(liveFinding.decision.rawValue.capitalized)
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(Capsule().fill(Color.primary.opacity(0.08)))
                 }
 
-                Text(finding.explanation)
+                Text(liveFinding.explanation)
                     .font(.title3.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -174,24 +183,57 @@ struct FindingDetailView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Files")
                         .font(.headline)
-                    ForEach(finding.files, id: \.path) { file in
-                        Text(file.path)
-                            .font(.body.monospaced())
-                            .textSelection(.enabled)
+                    ForEach(liveFinding.files, id: \.path) { file in
+                        HStack {
+                            Text(file.path)
+                                .font(.body.monospaced())
+                                .textSelection(.enabled)
+                            Spacer()
+                            Button("Quick Look") {
+                                appModel.previewFile(at: file.path)
+                            }
+                            .controlSize(.small)
+                        }
                     }
                 }
 
-                Text("Apply / undo arrives in Phase 9. This shell is audit-only.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                decisionBar
             }
             .padding(24)
             .frame(maxWidth: 720, alignment: .leading)
         }
     }
 
+    @ViewBuilder
+    private var decisionBar: some View {
+        HStack(spacing: 10) {
+            switch liveFinding.decision {
+            case .pending:
+                if liveFinding.recommendation.isFileMutation {
+                    Button("Approve") { appModel.approve(liveFinding) }
+                        .keyboardShortcut(.defaultAction)
+                }
+                Button("Dismiss", role: .destructive) { appModel.dismiss(liveFinding) }
+            case .approved:
+                Button("Review Apply Tab") { appModel.selectedSidebar = .apply }
+                Button("Unapprove") { appModel.resetDecision(liveFinding) }
+            case .dismissed:
+                Button("Restore to Pending") { appModel.resetDecision(liveFinding) }
+            case .applied:
+                Text("Applied — undo from History if needed.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case .undone:
+                Text("Undone. You can approve again after a rescan if the issue remains.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.top, 8)
+    }
+
     private var recommendationText: String {
-        switch finding.recommendation {
+        switch liveFinding.recommendation {
         case .keepCanonical(let keep, let archive):
             "Keep \(keep.filename); archive \(archive.map(\.filename).joined(separator: ", "))."
         case .rename(let file, let proposed):
@@ -206,7 +248,7 @@ struct FindingDetailView: View {
     }
 
     private var evidenceText: String {
-        switch finding.evidence {
+        switch liveFinding.evidence {
         case .duplicateSet(let hash, let wasted):
             return "Exact hash \(hash.prefix(12))… · \(ByteCountFormatter.string(fromByteCount: wasted, countStyle: .file)) reclaimable"
         case .contentDuplicateSet(let similarity, let wasted):
@@ -264,7 +306,7 @@ extension Severity {
         case .low: .secondary
         case .medium: .orange
         case .high: .red
-        case .critical: .purple
+        case .critical: Color(red: 0.55, green: 0.1, blue: 0.15)
         }
     }
 }

@@ -13,6 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
     ],
     targets: [
         // Pure Sendable value types; no dependencies.
@@ -25,7 +26,10 @@ let package = Package(
         .target(name: "AuditorHashing", dependencies: ["AuditorModels"]),
 
         // Text + metadata extraction (PDFKit, Vision OCR, docx).
-        .target(name: "AuditorExtract", dependencies: ["AuditorModels"]),
+        .target(name: "AuditorExtract", dependencies: [
+            "AuditorModels",
+            .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+        ]),
 
         // Policy model, naming template DSL, bundled templates.
         .target(
@@ -66,6 +70,10 @@ let package = Package(
         .testTarget(name: "AuditorModelsTests", dependencies: ["AuditorModels"]),
         .testTarget(name: "AuditorCrawlTests", dependencies: ["AuditorCrawl", "AuditorTestSupport"]),
         .testTarget(name: "AuditorHashingTests", dependencies: ["AuditorHashing", "AuditorTestSupport"]),
+        .testTarget(name: "AuditorExtractTests", dependencies: [
+            "AuditorExtract", "AuditorTestSupport",
+            .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+        ]),
         .testTarget(name: "AuditorDetectTests", dependencies: ["AuditorDetect", "AuditorHashing", "AuditorTestSupport"]),
         .testTarget(name: "AuditorStoreTests", dependencies: ["AuditorStore"]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),

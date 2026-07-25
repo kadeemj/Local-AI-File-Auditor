@@ -1,5 +1,6 @@
 import AuditorCrawl
 import AuditorDetect
+import AuditorExtract
 import AuditorHashing
 import AuditorModels
 import Foundation
@@ -12,9 +13,11 @@ func usage() -> Never {
     print("""
         auditor-cli 0.1.0 — FolderLint engine
 
-        usage: auditor-cli scan <folder> [options]
+        usage:
+          auditor-cli scan <folder> [options]     audit a folder
+          auditor-cli extract <file>              debug text/metadata extraction
 
-        options:
+        scan options:
           --dry-run          crawl statistics only, no analysis
           --duplicates       detect exact duplicate sets (default)
           --include-hidden   include hidden files
@@ -22,6 +25,40 @@ func usage() -> Never {
           --json             machine-readable output
         """)
     exit(2)
+}
+
+if arguments.first == "extract", arguments.count >= 2 {
+    let url = URL(fileURLWithPath: arguments[1])
+    let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+    let record = FileRecord(
+        path: url.path,
+        size: (attributes?[.size] as? NSNumber)?.int64Value ?? 0,
+        mtimeNanoseconds: 1
+    )
+
+    let extractor = DefaultTextExtractor()
+    guard extractor.canExtract(from: record) else {
+        FileHandle.standardError.write(Data("unsupported file type: \(record.filename)\n".utf8))
+        exit(1)
+    }
+
+    do {
+        let result = try await extractor.extractText(from: record)
+        print("file:     \(record.filename)")
+        print("method:   \(result.usedOCR ? "Vision OCR" : "text layer / direct")")
+        if let metadata = MetadataReader().read(from: record) {
+            print("title:    \(metadata.title ?? "—")")
+            print("author:   \(metadata.author ?? "—")")
+            print("keywords: \(metadata.keywords.isEmpty ? "—" : metadata.keywords.joined(separator: ", "))")
+        }
+        print("chars:    \(result.text.count)")
+        print("--- first 600 characters ---")
+        print(String(result.text.prefix(600)))
+    } catch {
+        FileHandle.standardError.write(Data("extraction failed: \(error)\n".utf8))
+        exit(1)
+    }
+    exit(0)
 }
 
 guard arguments.first == "scan", arguments.count >= 2 else { usage() }

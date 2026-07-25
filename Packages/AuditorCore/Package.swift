@@ -78,6 +78,7 @@ let package = Package(
         .testTarget(name: "AuditorDetectTests", dependencies: ["AuditorDetect", "AuditorHashing", "AuditorTestSupport"]),
         .testTarget(name: "AuditorStoreTests", dependencies: ["AuditorStore"]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),
+        .testTarget(name: "AuditorEngineTests", dependencies: ["AuditorEngine"]),
     ],
     swiftLanguageModes: [.v6]
 )

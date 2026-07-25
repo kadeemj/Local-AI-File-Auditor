@@ -50,7 +50,7 @@ struct FindingTests {
         #expect(decoded.files == finding.files)
     }
 
-    @Test("Phase 6 evidence payloads round-trip through persisted JSON")
+    @Test("semantic detector evidence payloads round-trip through persisted JSON")
     func phaseSixEvidenceCodable() throws {
         let nearest = FileRef(path: "/tmp/Finance/budget.pdf", size: 200, modifiedAt: Date(timeIntervalSince1970: 2))
         let encoder = JSONEncoder()
@@ -89,5 +89,38 @@ struct FindingTests {
         #expect(similarity == 0.8)
         #expect(nearestFiles == [nearest])
         #expect(source == .rules)
+
+        let detected = Date(timeIntervalSince1970: 1_788_134_400)
+        let action = Date(timeIntervalSince1970: 1_784_332_800)
+        let expirationEvidence = Evidence.expiration(
+            kind: .autoRenewal,
+            detectedDate: detected,
+            actionDate: action,
+            autoRenews: true,
+            noticePeriodDays: 30,
+            party: "Licensee",
+            contextSnippet: "The agreement automatically renews.",
+            judge: .foundationModel
+        )
+        let decodedExpiration = try decoder.decode(Evidence.self, from: encoder.encode(expirationEvidence))
+        guard case .expiration(
+            let kind,
+            let detectedDate,
+            let actionDate,
+            let autoRenews,
+            let noticeDays,
+            let party,
+            _,
+            let expirationSource
+        ) = decodedExpiration else {
+            Issue.record("expected expiration evidence"); return
+        }
+        #expect(kind == .autoRenewal)
+        #expect(detectedDate == detected)
+        #expect(actionDate == action)
+        #expect(autoRenews)
+        #expect(noticeDays == 30)
+        #expect(party == "Licensee")
+        #expect(expirationSource == .foundationModel)
     }
 }

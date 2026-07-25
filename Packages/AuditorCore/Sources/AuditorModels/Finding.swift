@@ -40,6 +40,27 @@ public struct FilenamePolicyViolation: Codable, Sendable, Hashable {
     }
 }
 
+/// The obligation a date represents. A detected date is never actionable until
+/// either deterministic context rules or the validated on-device model assigns
+/// one of these meanings.
+public enum DateMeaningKind: String, Codable, Sendable, Hashable, CaseIterable {
+    case effective
+    case expiration
+    case autoRenewal
+    case cancellationDeadline
+    case reportingDeadline
+    case other
+
+    public var isActionable: Bool {
+        switch self {
+        case .expiration, .autoRenewal, .cancellationDeadline, .reportingDeadline:
+            true
+        case .effective, .other:
+            false
+        }
+    }
+}
+
 /// Machine-checkable support for a finding. Grows a case per detector;
 /// the paired `explanation` string on `Finding` is the human-readable side.
 public enum Evidence: Codable, Sendable {
@@ -59,6 +80,16 @@ public enum Evidence: Codable, Sendable {
         suggestedFolderSimilarity: Double,
         nearestFiles: [FileRef],
         explanationJudge: JudgeSource
+    )
+    case expiration(
+        kind: DateMeaningKind,
+        detectedDate: Date,
+        actionDate: Date,
+        autoRenews: Bool,
+        noticePeriodDays: Int,
+        party: String?,
+        contextSnippet: String,
+        judge: JudgeSource
     )
     case note(String)
 }

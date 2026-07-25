@@ -30,11 +30,15 @@
 	<false/>
 	<key>NSDesktopFolderUsageDescription</key>
 	<string>FolderLint audits only the folders you select. Grant access so it can review files on your Desktop.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>FolderLint adds an expiration event only when you explicitly choose Export to Calendar.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>FolderLint audits only the folders you select. Grant access so it can review files in your Documents folder.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
 	<string>FolderLint audits only the folders you select. Grant access so it can review files in your Downloads folder.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
 	<string>FolderLint audits only the folders you select, including folders on external drives you choose.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>FolderLint adds an action-date reminder only when you explicitly choose Export to Reminders.</string>
 </dict>
 </plist>

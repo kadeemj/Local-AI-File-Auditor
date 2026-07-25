@@ -25,7 +25,7 @@ func usage() -> Never {
           --include-hidden   include hidden files
           --local-only       skip cloud placeholders entirely (default: metadata-only)
           --policy <id>      active bundled policy: nonprofit or small-business
-          --no-content       skip extraction, content duplicates, embeddings, and AI rename
+          --no-content       skip extraction, content duplicates, embeddings, AI rename, and expirations
           --json             machine-readable output
         """)
     exit(2)
@@ -144,9 +144,11 @@ if !dryRunOnly {
                         guard let extracted = try? await extractor.extractText(from: record),
                               !extracted.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                         else { return nil }
+                        // Expiration analysis needs more than the filename/embedding
+                        // excerpt, but the text remains transient and bounded.
                         return (
                             record.path,
-                            String(extracted.text.prefix(20_000)),
+                            String(extracted.text.prefix(250_000)),
                             TextFingerprint.compute(from: extracted.text)
                         )
                     }
@@ -191,6 +193,7 @@ if !dryRunOnly {
         findings += try await FilenamePolicyDetector().detect(context: context)
         findings += try await RenameSuggester().detect(context: context)
         findings += try await MisfiledDetector().detect(context: context)
+        findings += try await ExpirationDetector().detect(context: context)
         findings.sort { ($0.severity, $0.confidence) > ($1.severity, $1.confidence) }
     } catch {
         FileHandle.standardError.write(Data("error during analysis: \(error)\n".utf8))

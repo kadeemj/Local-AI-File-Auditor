@@ -17,7 +17,8 @@ public struct DetectorSignals: OptionSet, Sendable {
 }
 
 /// Immutable view of a completed crawl, handed to detectors after index freeze.
-/// Phase 3 adds extracted-content access; Phase 6 adds embeddings and policy.
+/// Phase 3 adds extracted-content access; Phase 6 adds embeddings and policy;
+/// Phase 7 consumes transient text for contextual expiration detection.
 public struct DetectionContext: Sendable {
     public let scanID: UUID
     public let files: [FileRecord]

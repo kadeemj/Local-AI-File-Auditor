@@ -19,23 +19,67 @@ public struct ScanHandle: Sendable {
     public func cancel() { onCancel() }
 }
 
-/// Orchestrates crawl → hash/extract → detect → persist, streaming ScanEvents.
-/// Full pipeline lands across Phases 1–7; this scaffold establishes the surface
-/// the app and CLI program against.
+/// Orchestrates crawl → hash/extract → detect, streaming `ScanEvent`s to the
+/// app UI and CLI. Persistence of findings/cache is wired in later phases;
+/// extracted text is never written to disk.
 public actor AuditorEngine {
     private let database: AuditorDatabase
     private let detectors: [any Detector]
 
-    public init(database: AuditorDatabase, detectors: [any Detector]) {
+    public init(database: AuditorDatabase, detectors: [any Detector]? = nil) {
         self.database = database
-        self.detectors = detectors
+        self.detectors = detectors ?? ScanPipeline.defaultDetectors
+    }
+
+    /// Convenience for UI/tests that do not need a durable database yet.
+    public static func makeEphemeral(detectors: [any Detector]? = nil) throws -> AuditorEngine {
+        try AuditorEngine(database: .inMemory(), detectors: detectors)
     }
 
     public func startScan(_ config: ScanConfiguration) -> ScanHandle {
         let scanID = UUID()
         let (stream, continuation) = AsyncStream.makeStream(of: ScanEvent.self)
-        continuation.yield(.failed(.storageFailure(message: "scan pipeline not yet implemented (Phase 1)")))
-        continuation.finish()
-        return ScanHandle(scanID: scanID, events: stream, onCancel: {})
+        let state = ScanCancellation()
+        let detectors = self.detectors
+
+        let task = Task {
+            await ScanPipeline.run(
+                config: config,
+                scanID: scanID,
+                detectors: detectors,
+                yield: { event in
+                    continuation.yield(event)
+                },
+                isCancelled: { state.isCancelled || Task.isCancelled }
+            )
+            continuation.finish()
+        }
+
+        continuation.onTermination = { _ in
+            state.cancel()
+            task.cancel()
+        }
+
+        return ScanHandle(scanID: scanID, events: stream) {
+            state.cancel()
+            task.cancel()
+        }
+    }
+}
+
+private final class ScanCancellation: @unchecked Sendable {
+    private let lock = NSLock()
+    private var cancelled = false
+
+    var isCancelled: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelled
+    }
+
+    func cancel() {
+        lock.lock()
+        cancelled = true
+        lock.unlock()
     }
 }

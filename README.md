@@ -40,8 +40,12 @@ Requirements: Xcode 26+, macOS 26+, `brew install xcodegen`.
 
 ```sh
 make test       # engine test suite (Swift Testing)
+make test-app   # app unit tests (bookmarks + ScanSessionModel)
 make generate   # regenerate FolderLint.xcodeproj from project.yml
 make build      # Debug build of the app
 ```
 
 The implementation plan and phase status live in the project plan document.
+Phases 0–8 are implemented: the sandboxed SwiftUI shell can onboard, grant
+folders via security-scoped bookmarks, and run live or mock scans into a
+findings dashboard. Apply/undo is Phase 9.

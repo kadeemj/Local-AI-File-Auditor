@@ -1,19 +1,19 @@
-import AuditorAI
 import AuditorCrawl
 import AuditorDetect
+import AuditorEngine
 import AuditorExtract
-import AuditorHashing
 import AuditorModels
 import AuditorPolicy
 import Foundation
 
 // Headless scanner for dogfooding and CI. Runs unsandboxed from the terminal.
+// The real pipeline lives in AuditorEngine; this is a thin CLI front-end.
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 
 func usage() -> Never {
     print("""
-        auditor-cli 0.2.0 — FolderLint engine
+        auditor-cli 0.3.0 — FolderLint engine
 
         usage:
           auditor-cli scan <folder> [options]     audit a folder
@@ -69,6 +69,7 @@ guard arguments.first == "scan", arguments.count >= 2 else { usage() }
 
 let rootPath = arguments[1]
 let asJSON = arguments.contains("--json")
+let dryRunOnly = arguments.contains("--dry-run")
 let policyID: String?
 if let policyFlag = arguments.firstIndex(of: "--policy") {
     guard arguments.indices.contains(policyFlag + 1) else { usage() }
@@ -76,6 +77,12 @@ if let policyFlag = arguments.firstIndex(of: "--policy") {
 } else {
     policyID = nil
 }
+
+var rules = SkipRules()
+if arguments.contains("--include-hidden") { rules.skipHidden = false }
+if arguments.contains("--local-only") { rules.cloudMode = .localOnly }
+
+let root = URL(fileURLWithPath: rootPath)
 let activePolicy: Policy?
 if let policyID {
     do {
@@ -87,135 +94,33 @@ if let policyID {
 } else {
     activePolicy = nil
 }
-var rules = SkipRules()
-if arguments.contains("--include-hidden") { rules.skipHidden = false }
-if arguments.contains("--local-only") { rules.cloudMode = .localOnly }
 
-let dryRunOnly = arguments.contains("--dry-run")
+if dryRunOnly {
+    let clock = ContinuousClock()
+    let start = clock.now
+    var fileCount = 0
+    var totalBytes: Int64 = 0
+    var datalessCount = 0
+    var byExtension: [String: Int] = [:]
 
-let root = URL(fileURLWithPath: rootPath)
-let clock = ContinuousClock()
-let start = clock.now
-
-var fileCount = 0
-var totalBytes: Int64 = 0
-var datalessCount = 0
-var byExtension: [String: Int] = [:]
-var records: [FileRecord] = []
-
-do {
-    for try await batch in FileCrawler().crawl(roots: [root], rules: rules) {
-        for record in batch {
-            fileCount += 1
-            totalBytes += record.size
-            if record.isDatalessCloudItem { datalessCount += 1 }
-            let ext = (record.filename as NSString).pathExtension.lowercased()
-            byExtension[ext.isEmpty ? "(none)" : ext, default: 0] += 1
-        }
-        if !dryRunOnly { records.append(contentsOf: batch) }
-    }
-} catch {
-    FileHandle.standardError.write(Data("error: \(error)\n".utf8))
-    exit(1)
-}
-
-var findings: [Finding] = []
-if !dryRunOnly {
     do {
-        let groups = try await StagedHashPipeline().duplicateGroups(in: records, rules: rules)
-
-        // Content fingerprints for text-extractable files (OCR is opt-in via
-        // `extract`, not paid on every bulk scan).
-        var fingerprints: [String: TextFingerprint] = [:]
-        var extractedTexts: [String: String] = [:]
-        if !arguments.contains("--no-content") {
-            let extractor = DefaultTextExtractor(enableOCRFallback: false)
-            let maxContentBytes: Int64 = 20 << 20
-            let candidates = records.filter { extractor.canExtract(from: $0) && $0.size <= maxContentBytes }
-
-            let extracted = await withTaskGroup(of: (String, String, TextFingerprint?)?.self) { group in
-                var iterator = candidates.makeIterator()
-                var inFlight = 0
-                var collected: [(String, String, TextFingerprint?)] = []
-                func addNext() {
-                    guard let record = iterator.next() else { return }
-                    inFlight += 1
-                    group.addTask {
-                        guard let extracted = try? await extractor.extractText(from: record),
-                              !extracted.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        else { return nil }
-                        // Expiration analysis needs more than the filename/embedding
-                        // excerpt, but the text remains transient and bounded.
-                        return (
-                            record.path,
-                            String(extracted.text.prefix(250_000)),
-                            TextFingerprint.compute(from: extracted.text)
-                        )
-                    }
-                }
-                for _ in 0..<4 { addNext() }
-                while inFlight > 0, let result = await group.next() {
-                    inFlight -= 1
-                    if let result { collected.append(result) }
-                    addNext()
-                }
-                return collected
-            }
-            for (path, text, fingerprint) in extracted {
-                extractedTexts[path] = text
-                if let fingerprint { fingerprints[path] = fingerprint }
+        for try await batch in FileCrawler().crawl(roots: [root], rules: rules) {
+            for record in batch {
+                fileCount += 1
+                totalBytes += record.size
+                if record.isDatalessCloudItem { datalessCount += 1 }
+                let ext = (record.filename as NSString).pathExtension.lowercased()
+                byExtension[ext.isEmpty ? "(none)" : ext, default: 0] += 1
             }
         }
-
-        let embeddingProvider = SentenceEmbeddingProvider()
-        let documentEmbeddings = extractedTexts.compactMapValues { embeddingProvider.vector(for: $0) }
-        let directories = Set(records.map { ($0.path as NSString).deletingLastPathComponent })
-        let folderLabelEmbeddings = Dictionary(uniqueKeysWithValues: directories.compactMap { directory in
-            let components = URL(fileURLWithPath: directory).pathComponents.suffix(3)
-            let label = components.joined(separator: " / ")
-            return embeddingProvider.vector(for: label).map { (directory, $0) }
-        })
-
-        let context = DetectionContext(
-            scanID: UUID(),
-            files: records,
-            duplicateGroups: groups,
-            textFingerprints: fingerprints.isEmpty ? nil : fingerprints,
-            extractedText: extractedTexts.isEmpty ? nil : extractedTexts,
-            documentEmbeddings: documentEmbeddings.isEmpty ? nil : documentEmbeddings,
-            folderLabelEmbeddings: folderLabelEmbeddings.isEmpty ? nil : folderLabelEmbeddings,
-            policy: activePolicy
-        )
-
-        findings = try await DuplicateDetector().detect(context: context)
-        findings += try await ContentDuplicateDetector().detect(context: context)
-        findings += try await VersionChainDetector().detect(context: context)
-        findings += try await FilenamePolicyDetector().detect(context: context)
-        findings += try await RenameSuggester().detect(context: context)
-        findings += try await MisfiledDetector().detect(context: context)
-        findings += try await ExpirationDetector().detect(context: context)
-        findings.sort { ($0.severity, $0.confidence) > ($1.severity, $1.confidence) }
     } catch {
-        FileHandle.standardError.write(Data("error during analysis: \(error)\n".utf8))
+        FileHandle.standardError.write(Data("error: \(error)\n".utf8))
         exit(1)
     }
-}
 
-let elapsed = start.duration(to: clock.now)
-let topExtensions = byExtension.sorted { $0.value > $1.value }.prefix(10)
-
-if asJSON {
-    struct Report: Codable {
-        let root: String
-        let files: Int
-        let totalBytes: Int64
-        let cloudPlaceholders: Int
-        let topExtensions: [String: Int]
-        let policy: String?
-        let seconds: Double
-        let findings: [Finding]?
-    }
-    let report = Report(
+    let elapsed = start.duration(to: clock.now)
+    let topExtensions = byExtension.sorted { $0.value > $1.value }.prefix(10)
+    emitReport(
         root: root.path,
         files: fileCount,
         totalBytes: totalBytes,
@@ -223,42 +128,136 @@ if asJSON {
         topExtensions: Dictionary(uniqueKeysWithValues: topExtensions.map { ($0.key, $0.value) }),
         policy: activePolicy?.id,
         seconds: Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18,
-        findings: dryRunOnly ? nil : findings
+        findings: nil,
+        asJSON: asJSON,
+        policyDisplayName: activePolicy?.displayName
     )
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    encoder.dateEncodingStrategy = .iso8601
-    print(String(data: try! encoder.encode(report), encoding: .utf8)!)
+    exit(0)
+}
+
+let detectors: [any Detector]
+if arguments.contains("--no-content") {
+    detectors = [DuplicateDetector(), FilenamePolicyDetector()]
 } else {
-    let formatter = ByteCountFormatter()
-    print("FolderLint scan — \(root.path)")
-    print("  files:              \(fileCount)")
-    print("  total size:         \(formatter.string(fromByteCount: totalBytes))")
-    print("  cloud placeholders: \(datalessCount)")
-    print("  policy:             \(activePolicy?.displayName ?? "universal rules only")")
-    print("  elapsed:            \(elapsed)")
-    print("  top extensions:")
-    for (ext, count) in topExtensions {
-        print("    \(ext.padding(toLength: 12, withPad: " ", startingAt: 0)) \(count)")
+    detectors = ScanPipeline.defaultDetectors
+}
+
+do {
+    let engine = try AuditorEngine.makeEphemeral(detectors: detectors)
+    let handle = await engine.startScan(ScanConfiguration(
+        rootPaths: [root.path],
+        skipRules: rules,
+        policyID: policyID
+    ))
+
+    var findings: [Finding] = []
+    var summary: ScanSummary?
+    var filesSeen = 0
+
+    for await event in handle.events {
+        switch event {
+        case .phaseChanged:
+            break
+        case .progress(let progress):
+            filesSeen = progress.filesSeen
+        case .finding(let finding):
+            findings.append(finding)
+        case .completed(let completed):
+            summary = completed
+        case .failed(let error):
+            FileHandle.standardError.write(Data("error: \(error)\n".utf8))
+            exit(1)
+        }
     }
 
-    if !dryRunOnly {
-        let totalWasted = findings.reduce(Int64(0)) { total, finding in
-            switch finding.evidence {
-            case .duplicateSet(_, let wasted), .contentDuplicateSet(_, let wasted):
-                return total + wasted
-            default:
-                return total
-            }
+    findings.sort { ($0.severity, $0.confidence) > ($1.severity, $1.confidence) }
+    emitReport(
+        root: root.path,
+        files: summary?.filesScanned ?? filesSeen,
+        totalBytes: summary?.totalBytes ?? 0,
+        cloudPlaceholders: summary?.cloudPlaceholders ?? 0,
+        topExtensions: [:],
+        policy: activePolicy?.id,
+        seconds: summary?.duration ?? 0,
+        findings: findings,
+        asJSON: asJSON,
+        policyDisplayName: activePolicy?.displayName
+    )
+} catch {
+    FileHandle.standardError.write(Data("error: \(error)\n".utf8))
+    exit(1)
+}
+
+func emitReport(
+    root: String,
+    files: Int,
+    totalBytes: Int64,
+    cloudPlaceholders: Int,
+    topExtensions: [String: Int],
+    policy: String?,
+    seconds: Double,
+    findings: [Finding]?,
+    asJSON: Bool,
+    policyDisplayName: String?
+) {
+    if asJSON {
+        struct Report: Codable {
+            let root: String
+            let files: Int
+            let totalBytes: Int64
+            let cloudPlaceholders: Int
+            let topExtensions: [String: Int]
+            let policy: String?
+            let seconds: Double
+            let findings: [Finding]?
         }
+        let report = Report(
+            root: root,
+            files: files,
+            totalBytes: totalBytes,
+            cloudPlaceholders: cloudPlaceholders,
+            topExtensions: topExtensions,
+            policy: policy,
+            seconds: seconds,
+            findings: findings
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        print(String(data: try! encoder.encode(report), encoding: .utf8)!)
+        return
+    }
+
+    let formatter = ByteCountFormatter()
+    print("FolderLint scan — \(root)")
+    print("  files:              \(files)")
+    print("  total size:         \(formatter.string(fromByteCount: totalBytes))")
+    print("  cloud placeholders: \(cloudPlaceholders)")
+    print("  policy:             \(policyDisplayName ?? "universal rules only")")
+    print("  elapsed:            \(String(format: "%.3fs", seconds))")
+    if !topExtensions.isEmpty {
+        print("  top extensions:")
+        for (ext, count) in topExtensions.sorted(by: { $0.value > $1.value }).prefix(10) {
+            print("    \(ext.padding(toLength: 12, withPad: " ", startingAt: 0)) \(count)")
+        }
+    }
+
+    guard let findings else { return }
+    let totalWasted = findings.reduce(Int64(0)) { total, finding in
+        switch finding.evidence {
+        case .duplicateSet(_, let wasted), .contentDuplicateSet(_, let wasted):
+            return total + wasted
+        default:
+            return total
+        }
+    }
+    print("")
+    print("findings: \(findings.count) (\(formatter.string(fromByteCount: totalWasted)) reclaimable)")
+    for finding in findings {
         print("")
-        print("findings: \(findings.count) (\(formatter.string(fromByteCount: totalWasted)) reclaimable)")
-        for finding in findings {
-            print("")
-            print("  [\(finding.severity)] (\(finding.kind)) \(finding.explanation)")
-            for file in finding.files {
-                print("    - \(file.path)")
-            }
+        print("  [\(finding.severity)] (\(finding.kind)) \(finding.explanation)")
+        for file in finding.files {
+            print("    - \(file.path)")
         }
     }
 }

@@ -16,6 +16,27 @@ public struct StoredFolderProfile: Codable, Sendable, Equatable {
     }
 }
 
+/// A user-granted folder and its security-scoped bookmark blob.
+/// The app creates bookmarks via `URL.bookmarkData`; the engine only persists them.
+public struct StoredWatchedFolder: Codable, Sendable, Equatable {
+    public let path: String
+    public let bookmark: Data?
+    public let cloudMode: CloudScanMode
+    public let addedAt: Date
+
+    public init(
+        path: String,
+        bookmark: Data?,
+        cloudMode: CloudScanMode = .metadataOnly,
+        addedAt: Date = Date()
+    ) {
+        self.path = path
+        self.bookmark = bookmark
+        self.cloudMode = cloudMode
+        self.addedAt = addedAt
+    }
+}
+
 /// Owns the SQLite database (GRDB). One writer for the app; in-memory queues for tests.
 /// Extracted document text is never stored — only fingerprints, metadata, and findings.
 public final class AuditorDatabase: Sendable {
@@ -78,6 +99,62 @@ public final class AuditorDatabase: Sendable {
                     updatedAt: row["updated_at"]
                 )
             }
+        }
+    }
+
+    public func saveWatchedFolder(_ folder: StoredWatchedFolder) throws {
+        let encoder = JSONEncoder()
+        let cloudModeJSON = try encoder.encode(folder.cloudMode)
+        try writer.write { database in
+            try database.execute(
+                sql: """
+                    INSERT INTO watched_folders (path, bookmark, cloud_mode_json, added_at)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(path) DO UPDATE SET
+                        bookmark = excluded.bookmark,
+                        cloud_mode_json = excluded.cloud_mode_json,
+                        added_at = excluded.added_at
+                    """,
+                arguments: [folder.path, folder.bookmark, cloudModeJSON, folder.addedAt]
+            )
+        }
+    }
+
+    public func loadWatchedFolders() throws -> [StoredWatchedFolder] {
+        let decoder = JSONDecoder()
+        return try writer.read { database in
+            let rows = try Row.fetchAll(
+                database,
+                sql: """
+                    SELECT path, bookmark, cloud_mode_json, added_at
+                    FROM watched_folders
+                    ORDER BY added_at ASC
+                    """
+            )
+            return rows.map { row in
+                let cloudMode: CloudScanMode
+                if let data: Data = row["cloud_mode_json"],
+                   let decoded = try? decoder.decode(CloudScanMode.self, from: data) {
+                    cloudMode = decoded
+                } else {
+                    cloudMode = .metadataOnly
+                }
+                return StoredWatchedFolder(
+                    path: row["path"],
+                    bookmark: row["bookmark"],
+                    cloudMode: cloudMode,
+                    addedAt: row["added_at"]
+                )
+            }
+        }
+    }
+
+    public func removeWatchedFolder(path: String) throws {
+        try writer.write { database in
+            try database.execute(
+                sql: "DELETE FROM watched_folders WHERE path = ?",
+                arguments: [path]
+            )
         }
     }
 

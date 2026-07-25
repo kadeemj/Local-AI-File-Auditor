@@ -27,6 +27,10 @@ targets:
         product: AuditorEngine
       - package: AuditorCore
         product: AuditorModels
+      - package: AuditorCore
+        product: AuditorPolicy
+      - package: AuditorCore
+        product: AuditorStore
     settings:
       base:
         INFOPLIST_FILE: FolderLint/Info.plist
@@ -38,3 +42,15 @@ targets:
         script: |
           "$SRCROOT/Scripts/check_network_policy.sh"
         basedOnDependencyAnalysis: false
+
+  FolderLintTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - FolderLintTests
+    dependencies:
+      - target: FolderLint
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        MACOSX_DEPLOYMENT_TARGET: "26.0"

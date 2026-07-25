@@ -9,6 +9,8 @@ let package = Package(
     products: [
         .library(name: "AuditorEngine", targets: ["AuditorEngine"]),
         .library(name: "AuditorModels", targets: ["AuditorModels"]),
+        .library(name: "AuditorPolicy", targets: ["AuditorPolicy"]),
+        .library(name: "AuditorStore", targets: ["AuditorStore"]),
         .executable(name: "auditor-cli", targets: ["auditor-cli"]),
     ],
     dependencies: [
@@ -62,7 +64,14 @@ let package = Package(
         ]),
 
         // Headless scanner for dogfooding and CI. Runs unsandboxed from the terminal.
-        .executableTarget(name: "auditor-cli", dependencies: ["AuditorEngine"]),
+        .executableTarget(name: "auditor-cli", dependencies: [
+            "AuditorEngine",
+            "AuditorModels",
+            "AuditorCrawl",
+            "AuditorExtract",
+            "AuditorDetect",
+            "AuditorPolicy",
+        ]),
 
         // Shared test helpers (FixtureBuilder). Not in `products`; test-only by convention.
         .target(name: "AuditorTestSupport", dependencies: ["AuditorModels"]),
@@ -78,7 +87,13 @@ let package = Package(
         .testTarget(name: "AuditorDetectTests", dependencies: ["AuditorDetect", "AuditorHashing", "AuditorTestSupport"]),
         .testTarget(name: "AuditorStoreTests", dependencies: ["AuditorStore"]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),
-        .testTarget(name: "AuditorEngineTests", dependencies: ["AuditorEngine"]),
+        // Engine orchestration + EventKit export tests.
+        .testTarget(name: "AuditorEngineTests", dependencies: [
+            "AuditorEngine",
+            "AuditorDetect",
+            "AuditorHashing",
+            "AuditorTestSupport",
+        ]),
     ],
     swiftLanguageModes: [.v6]
 )

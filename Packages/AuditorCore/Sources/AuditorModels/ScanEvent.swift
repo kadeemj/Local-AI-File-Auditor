@@ -23,12 +23,23 @@ public struct ScanProgress: Codable, Sendable {
 public struct ScanSummary: Codable, Sendable {
     public let scanID: UUID
     public let filesScanned: Int
+    public let totalBytes: Int64
+    public let cloudPlaceholders: Int
     public let findingsCount: Int
     public let duration: TimeInterval
 
-    public init(scanID: UUID, filesScanned: Int, findingsCount: Int, duration: TimeInterval) {
+    public init(
+        scanID: UUID,
+        filesScanned: Int,
+        totalBytes: Int64 = 0,
+        cloudPlaceholders: Int = 0,
+        findingsCount: Int,
+        duration: TimeInterval
+    ) {
         self.scanID = scanID
         self.filesScanned = filesScanned
+        self.totalBytes = totalBytes
+        self.cloudPlaceholders = cloudPlaceholders
         self.findingsCount = findingsCount
         self.duration = duration
     }

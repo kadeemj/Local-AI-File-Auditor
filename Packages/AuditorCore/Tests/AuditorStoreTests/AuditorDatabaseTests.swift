@@ -80,4 +80,37 @@ struct AuditorDatabaseTests {
         let updated = try #require(db.loadFolderProfiles().first)
         #expect(updated.embedding == [1, 0, 0])
     }
+
+    @Test("watched folders persist bookmarks and cloud mode")
+    func watchedFoldersRoundTrip() throws {
+        let db = try AuditorDatabase.inMemory()
+        let added = Date(timeIntervalSince1970: 1_700_000_100)
+        let bookmark = Data("bookmark-bytes".utf8)
+        try db.saveWatchedFolder(StoredWatchedFolder(
+            path: "/Users/shared/Grants",
+            bookmark: bookmark,
+            cloudMode: .localOnly,
+            addedAt: added
+        ))
+
+        let folders = try db.loadWatchedFolders()
+        let folder = try #require(folders.first)
+        #expect(folder.path == "/Users/shared/Grants")
+        #expect(folder.bookmark == bookmark)
+        #expect(folder.cloudMode == .localOnly)
+        #expect(folder.addedAt == added)
+
+        try db.saveWatchedFolder(StoredWatchedFolder(
+            path: "/Users/shared/Grants",
+            bookmark: Data("updated".utf8),
+            cloudMode: .metadataOnly,
+            addedAt: added
+        ))
+        let updated = try #require(db.loadWatchedFolders().first)
+        #expect(updated.bookmark == Data("updated".utf8))
+        #expect(updated.cloudMode == .metadataOnly)
+
+        try db.removeWatchedFolder(path: "/Users/shared/Grants")
+        #expect(try db.loadWatchedFolders().isEmpty)
+    }
 }

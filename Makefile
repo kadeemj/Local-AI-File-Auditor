@@ -17,6 +17,10 @@ build:
 test:
 	cd Packages/AuditorCore && swift test
 
+# App unit tests (bookmark round-trip + ScanSessionModel mock stream)
+test-app:
+	xcodebuild -project $(XCODEPROJ) -scheme $(SCHEME) -configuration Debug test -only-testing:FolderLintTests
+
 clean:
 	rm -rf build
 	cd Packages/AuditorCore && swift package clean

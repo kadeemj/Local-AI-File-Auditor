@@ -4,30 +4,88 @@ struct RootView: View {
     @Environment(AppModel.self) private var appModel
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "folder.badge.gearshape")
-                .font(.system(size: 56))
-                .foregroundStyle(.tint)
-            Text("FolderLint")
-                .font(.largeTitle.bold())
-            Text("A private document-governance auditor.\nYour files never leave this Mac.")
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            Text("Scaffold build — onboarding and scanning arrive in Phase 8.")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+        Group {
+            if appModel.needsOnboarding {
+                OnboardingView()
+            } else {
+                MainSplitView()
+            }
         }
-        .padding(40)
     }
 }
 
-struct SettingsView: View {
+struct MainSplitView: View {
+    @Environment(AppModel.self) private var appModel
+
     var body: some View {
-        Form {
-            Text("Settings arrive in Phase 8.")
+        @Bindable var appModel = appModel
+        NavigationSplitView {
+            List(selection: $appModel.selectedSidebar) {
+                ForEach(AppModel.SidebarItem.allCases) { item in
+                    Label(item.title, systemImage: item.systemImage)
+                        .tag(item)
+                }
+            }
+            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 240)
+            .safeAreaInset(edge: .bottom) {
+                sidebarFooter
+            }
+        } detail: {
+            detail
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .toolbar {
+            ToolbarItemGroup {
+                if appModel.scanSession.isRunning {
+                    ProgressView()
+                        .controlSize(.small)
+                    Button("Cancel Scan") { appModel.cancelScan() }
+                } else {
+                    Button("Scan", systemImage: "play.fill") {
+                        appModel.startScan()
+                    }
+                    .help("Scan granted folders with the active policy")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        switch appModel.selectedSidebar {
+        case .dashboard:
+            DashboardView()
+        case .findings:
+            FindingsListView()
+        case .renames:
+            RenamesListView()
+        case .expirations:
+            ExpirationsListView()
+        case .history:
+            PlaceholderFeatureView(
+                title: "History",
+                systemImage: "clock.arrow.circlepath",
+                message: "Apply journal and undo history arrive in Phase 9."
+            )
+        case .reports:
+            PlaceholderFeatureView(
+                title: "Reports",
+                systemImage: "doc.richtext",
+                message: "CSV and PDF audit reports arrive in Phase 10."
+            )
+        }
+    }
+
+    private var sidebarFooter: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Divider()
+            Text(appModel.selectedPolicy?.displayName ?? "Universal rules")
+                .font(.caption.weight(.medium))
+            Text("\(appModel.folders.folders.count) folder\(appModel.folders.folders.count == 1 ? "" : "s") granted")
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
-        .padding()
-        .frame(width: 420, height: 200)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

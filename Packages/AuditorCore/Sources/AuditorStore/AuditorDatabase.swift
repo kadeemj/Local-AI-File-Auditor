@@ -1,0 +1,90 @@
+import AuditorModels
+import Foundation
+import GRDB
+
+/// Owns the SQLite database (GRDB). One writer for the app; in-memory queues for tests.
+/// Extracted document text is never stored — only fingerprints, metadata, and findings.
+public final class AuditorDatabase: Sendable {
+    public let writer: any DatabaseWriter
+
+    public init(path: String) throws {
+        var config = Configuration()
+        config.foreignKeysEnabled = true
+        let pool = try DatabasePool(path: path, configuration: config)
+        self.writer = pool
+        try Self.migrator.migrate(pool)
+    }
+
+    public static func inMemory() throws -> AuditorDatabase {
+        try AuditorDatabase(queue: DatabaseQueue())
+    }
+
+    private init(queue: DatabaseQueue) throws {
+        self.writer = queue
+        try Self.migrator.migrate(queue)
+    }
+
+    static var migrator: DatabaseMigrator {
+        var migrator = DatabaseMigrator()
+
+        migrator.registerMigration("v1") { db in
+            try db.create(table: "scans") { t in
+                t.column("id", .text).primaryKey()
+                t.column("started_at", .datetime).notNull()
+                t.column("config_json", .text).notNull()
+                t.column("summary_json", .text)
+            }
+
+            try db.create(table: "scan_cache") { t in
+                t.column("path", .text).primaryKey()
+                t.column("size", .integer).notNull()
+                t.column("mtime_ns", .integer).notNull()
+                t.column("file_id", .text)
+                t.column("partial_hash", .text)
+                t.column("full_hash", .text)
+                t.column("text_fingerprint", .blob)
+                t.column("last_seen_scan", .text).notNull()
+            }
+            try db.create(index: "idx_scan_cache_full_hash", on: "scan_cache", columns: ["full_hash"])
+
+            try db.create(table: "findings") { t in
+                t.column("id", .text).primaryKey()
+                t.column("stable_key", .text).notNull().unique()
+                t.column("detector_id", .text).notNull()
+                t.column("kind", .text).notNull()
+                t.column("severity", .integer).notNull()
+                t.column("payload_json", .text).notNull()
+                t.column("decision", .text).notNull()
+                t.column("scan_id", .text).notNull()
+                t.column("created_at", .datetime).notNull()
+            }
+
+            try db.create(table: "watched_folders") { t in
+                t.column("path", .text).primaryKey()
+                t.column("bookmark", .blob)
+                t.column("cloud_mode_json", .text)
+                t.column("added_at", .datetime).notNull()
+            }
+
+            try db.create(table: "folder_profiles") { t in
+                t.column("path", .text).primaryKey()
+                t.column("embedding", .blob)
+                t.column("description", .text)
+                t.column("updated_at", .datetime).notNull()
+            }
+
+            try db.create(table: "apply_journal") { t in
+                t.column("id", .integer).primaryKey(autoincrement: true)
+                t.column("batch_id", .text).notNull().indexed()
+                t.column("finding_id", .text).notNull()
+                t.column("operation", .text).notNull()
+                t.column("original_path", .text).notNull()
+                t.column("new_path", .text).notNull()
+                t.column("performed_at", .datetime).notNull()
+                t.column("undone_at", .datetime)
+            }
+        }
+
+        return migrator
+    }
+}

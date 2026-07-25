@@ -1,0 +1,40 @@
+# XcodeGen project definition. Regenerate with: make generate
+# The generated FolderLint.xcodeproj is committed; this file is the source of truth
+# for project structure so pbxproj surgery is never done by hand.
+name: FolderLint
+options:
+  bundleIdPrefix: com.kadeemjeffery
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+
+packages:
+  AuditorCore:
+    path: Packages/AuditorCore
+
+targets:
+  FolderLint:
+    type: application
+    platform: macOS
+    sources:
+      - FolderLint
+    dependencies:
+      - package: AuditorCore
+        product: AuditorEngine
+      - package: AuditorCore
+        product: AuditorModels
+    settings:
+      base:
+        INFOPLIST_FILE: FolderLint/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: FolderLint/FolderLint.entitlements
+        ENABLE_APP_SANDBOX: YES
+    postCompileScripts:
+      - name: Check Network Policy
+        script: |
+          "$SRCROOT/Scripts/check_network_policy.sh"
+        basedOnDependencyAnalysis: false

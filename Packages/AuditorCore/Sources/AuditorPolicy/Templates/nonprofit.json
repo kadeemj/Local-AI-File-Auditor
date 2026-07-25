@@ -1,0 +1,16 @@
+{
+  "id": "nonprofit",
+  "displayName": "Nonprofit File Governance",
+  "namingTemplate": "YYYY-MM-DD_{DocType}_{Org}_{Status}",
+  "folderTaxonomy": [
+    "01 Governance",
+    "02 Finance",
+    "03 Grants",
+    "04 Legal",
+    "05 Programs",
+    "06 Human Resources",
+    "07 Fundraising",
+    "08 Technology"
+  ],
+  "expirationHorizonDays": 90
+}

@@ -1,0 +1,16 @@
+{
+  "id": "small-business",
+  "displayName": "Small Business Records",
+  "namingTemplate": "YYYY-MM-DD_{DocType}_{Org}_{Status}",
+  "folderTaxonomy": [
+    "01 Corporate",
+    "02 Finance",
+    "03 Clients",
+    "04 Legal",
+    "05 Operations",
+    "06 Human Resources",
+    "07 Marketing",
+    "08 Technology"
+  ],
+  "expirationHorizonDays": 90
+}

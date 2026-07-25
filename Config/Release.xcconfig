@@ -1,0 +1,7 @@
+#include "Shared.xcconfig"
+#include "Signing.xcconfig"
+
+// Direct distribution: Developer ID Application + notarization (Phase 12).
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = Developer ID Application
+SWIFT_OPTIMIZATION_LEVEL = -O

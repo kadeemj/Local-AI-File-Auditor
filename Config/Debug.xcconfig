@@ -1,0 +1,7 @@
+#include "Shared.xcconfig"
+
+// Ad-hoc signing keeps local/headless Debug builds friction-free.
+// The sandbox still applies — ad-hoc signatures satisfy it for local runs.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+SWIFT_OPTIMIZATION_LEVEL = -Onone

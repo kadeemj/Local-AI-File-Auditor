@@ -1,0 +1,6 @@
+// Team ID is not a secret; commit it. The actual secrets (notarytool credentials,
+// Sparkle EdDSA private key) live in the Keychain and are never in this repo.
+//
+// TODO(Phase 12): set DEVELOPMENT_TEAM once the Developer ID Application
+// certificate is installed (Xcode → Settings → Accounts, or developer.apple.com).
+DEVELOPMENT_TEAM =

@@ -3,7 +3,7 @@
 # for project structure so pbxproj surgery is never done by hand.
 name: FolderLint
 options:
-  bundleIdPrefix: com.kadeemjeffery
+  bundleIdPrefix: com.folderlint
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true

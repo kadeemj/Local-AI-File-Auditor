@@ -60,7 +60,11 @@ let package = Package(
         // Headless scanner for dogfooding and CI. Runs unsandboxed from the terminal.
         .executableTarget(name: "auditor-cli", dependencies: ["AuditorEngine"]),
 
+        // Shared test helpers (FixtureBuilder). Not in `products`; test-only by convention.
+        .target(name: "AuditorTestSupport", dependencies: ["AuditorModels"]),
+
         .testTarget(name: "AuditorModelsTests", dependencies: ["AuditorModels"]),
+        .testTarget(name: "AuditorCrawlTests", dependencies: ["AuditorCrawl", "AuditorTestSupport"]),
         .testTarget(name: "AuditorStoreTests", dependencies: ["AuditorStore"]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),
     ],

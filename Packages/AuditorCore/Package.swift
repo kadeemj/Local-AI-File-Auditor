@@ -65,6 +65,8 @@ let package = Package(
 
         .testTarget(name: "AuditorModelsTests", dependencies: ["AuditorModels"]),
         .testTarget(name: "AuditorCrawlTests", dependencies: ["AuditorCrawl", "AuditorTestSupport"]),
+        .testTarget(name: "AuditorHashingTests", dependencies: ["AuditorHashing", "AuditorTestSupport"]),
+        .testTarget(name: "AuditorDetectTests", dependencies: ["AuditorDetect", "AuditorHashing", "AuditorTestSupport"]),
         .testTarget(name: "AuditorStoreTests", dependencies: ["AuditorStore"]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),
     ],

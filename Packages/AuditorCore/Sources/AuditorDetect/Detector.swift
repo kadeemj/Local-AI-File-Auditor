@@ -1,3 +1,4 @@
+import AuditorHashing
 import AuditorModels
 import Foundation
 
@@ -15,14 +16,17 @@ public struct DetectorSignals: OptionSet, Sendable {
 }
 
 /// Immutable view of a completed crawl, handed to detectors after index freeze.
-/// Phase 2 adds hash groups; Phase 3 adds extracted-content access.
+/// Phase 3 adds extracted-content access; Phase 6 adds embeddings and policy.
 public struct DetectionContext: Sendable {
     public let scanID: UUID
     public let files: [FileRecord]
+    /// Populated by the engine when a registered detector requires `.hashes`.
+    public let duplicateGroups: [DuplicateGroup]?
 
-    public init(scanID: UUID, files: [FileRecord]) {
+    public init(scanID: UUID, files: [FileRecord], duplicateGroups: [DuplicateGroup]? = nil) {
         self.scanID = scanID
         self.files = files
+        self.duplicateGroups = duplicateGroups
     }
 }
 

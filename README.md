@@ -46,6 +46,5 @@ make build      # Debug build of the app
 ```
 
 The implementation plan and phase status live in the project plan document.
-Phases 0–9 are implemented: the sandboxed SwiftUI shell can onboard, grant
-folders, scan, approve findings, preview apply plans, journal-first apply, and
-undo. CSV/PDF reports are Phase 10.
+Phases 0–10 are implemented: onboarding, scan, approve/apply/undo, and
+CSV/PDF audit reports. Licensing is Phase 11.

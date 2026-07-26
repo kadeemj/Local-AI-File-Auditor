@@ -39,29 +39,26 @@ Full design and 14-phase roadmap:
 
 ## Current implementation state
 
-Phases 0–9 are complete.
+Phases 0–10 are complete.
 
-### Phases 0–8
+### Phases 0–9
 
-Engine + app shell: crawl, hash, extract, detectors, Foundation Models, policies, expirations/EventKit, onboarding, security-scoped bookmarks, NavigationSplitView, live/mock scans. See commits through `da0ce52`.
+Engine + app shell + apply/undo. See commits through `5f418a1`.
 
-### Phase 9 — review, apply, undo
+### Phase 10 — CSV and PDF reports
 
-- `ApplyEngine.plan/apply/undo`: rename, move, archive→`_Archive/`; never delete
-- Conflicts: missing source, destination exists, in-plan collision, changed-since-scan, dataless cloud placeholders
-- Journal-first restore point in GRDB (`apply_journal` + v2 size/mtime metadata); mid-batch failure rolls file ops back
-- Undo refuses if an applied file changed afterward; journal survives DB relaunch
-- Findings UI: Approve / Dismiss, evidence panel, Quick Look
-- Apply tab: preview operations + conflicts, Apply button
-- History tab: applied batches with per-batch Undo
-- Mock Scan materializes a disposable on-disk fixture so apply/undo can be dogfooded without a folder grant
+- `AuditorReports`: `AuditReport`, `ReportFormatting`, `CSVExporter` (RFC 4180 escaping)
+- CLI: `auditor-cli scan <folder> --csv <path>`
+- App Reports tab: summary cards, Export CSV… / Export PDF…
+- `PDFReportRenderer` via SwiftUI `ImageRenderer`: summary page, findings by severity, applied-changes log
+- Consultant artifact stays on-device; no network involvement
 
 ## Verification
 
-- 102 engine tests / 23 suites pass (`make test`)
-- 3 app tests pass (`make test-app`)
+- 106 engine tests / 24 suites pass (`make test`)
+- 4 app tests pass (`make test-app`) — includes PDF render smoke
 - `make build` succeeds; network-policy gate passes
-- ApplyEngine round-trip, collision, changed-since-scan, changed-since-apply, journal relaunch, and move tests pass
+- CLI CSV dogfood emits findings flat file with correct header/escaping
 
 Useful commands:
 
@@ -71,30 +68,29 @@ make build
 make test-app
 Scripts/check_network_policy.sh
 
-swift run --package-path Packages/AuditorCore auditor-cli scan <folder> --policy nonprofit
+swift run --package-path Packages/AuditorCore auditor-cli scan <folder> --policy nonprofit --csv ~/Desktop/audit.csv
 ```
 
-Dogfood in the app: Mock Scan → Approve rename/archive/move findings → Apply tab → Apply → History → Undo.
+Dogfood in the app: Mock Scan → Reports → Export CSV / Export PDF.
 
 ## Important remaining scaffolds
 
 - Findings/scan-cache persistence is still not fully wired (schema exists; findings live in session state + journal).
 - EventKit export exists as an engine API but has no UI yet.
-- Reports sidebar entry is a placeholder.
-- Licensing, Sparkle, reports, and release automation remain future phases.
+- Licensing, Sparkle, and release automation remain future phases.
 
-## Next phase: Phase 10 — CSV and PDF reports
+## Next phase: Phase 11 — trial and Lemon Squeezy licensing
 
 Implement:
 
-- `CSVExporter` (findings flat file)
-- `PDFReportRenderer` via SwiftUI `ImageRenderer`
-- Summary page, findings by severity, applied-changes log
-- Consultant-facing artifact polish
+- Keychain-anchored 14-day offline trial
+- Lemon Squeezy license activate/validate/deactivate
+- `LicenseManager` state machine + degraded modes
+- Policy-pack unlock path
+- Settings → License UI
 
 ## Later phases
 
-- Phase 11: trial and Lemon Squeezy licensing
 - Phase 12: Sparkle and scripted release pipeline
 - Phase 13: website and hardening
 

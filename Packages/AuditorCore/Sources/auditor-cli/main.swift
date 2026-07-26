@@ -4,6 +4,7 @@ import AuditorEngine
 import AuditorExtract
 import AuditorModels
 import AuditorPolicy
+import AuditorReports
 import Foundation
 
 // Headless scanner for dogfooding and CI. Runs unsandboxed from the terminal.
@@ -13,7 +14,7 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 
 func usage() -> Never {
     print("""
-        auditor-cli 0.3.0 — FolderLint engine
+        auditor-cli 0.4.0 — FolderLint engine
 
         usage:
           auditor-cli scan <folder> [options]     audit a folder
@@ -27,6 +28,7 @@ func usage() -> Never {
           --policy <id>      active bundled policy: nonprofit or small-business
           --no-content       skip extraction, content duplicates, embeddings, AI rename, and expirations
           --json             machine-readable output
+          --csv <path>       write findings CSV to path
         """)
     exit(2)
 }
@@ -70,6 +72,13 @@ guard arguments.first == "scan", arguments.count >= 2 else { usage() }
 let rootPath = arguments[1]
 let asJSON = arguments.contains("--json")
 let dryRunOnly = arguments.contains("--dry-run")
+let csvOut: String?
+if let csvFlag = arguments.firstIndex(of: "--csv") {
+    guard arguments.indices.contains(csvFlag + 1) else { usage() }
+    csvOut = arguments[csvFlag + 1]
+} else {
+    csvOut = nil
+}
 let policyID: String?
 if let policyFlag = arguments.firstIndex(of: "--policy") {
     guard arguments.indices.contains(policyFlag + 1) else { usage() }
@@ -183,6 +192,23 @@ do {
         asJSON: asJSON,
         policyDisplayName: activePolicy?.displayName
     )
+    if let csvOut {
+        let report = AuditReport(
+            policyName: activePolicy?.displayName,
+            folderPaths: [root.path],
+            filesScanned: summary?.filesScanned ?? filesSeen,
+            totalBytes: summary?.totalBytes,
+            scanDuration: summary?.duration,
+            findings: findings
+        )
+        do {
+            try CSVExporter.write(report, to: URL(fileURLWithPath: csvOut))
+            FileHandle.standardError.write(Data("csv written: \(csvOut)\n".utf8))
+        } catch {
+            FileHandle.standardError.write(Data("csv write failed: \(error)\n".utf8))
+            exit(1)
+        }
+    }
 } catch {
     FileHandle.standardError.write(Data("error: \(error)\n".utf8))
     exit(1)

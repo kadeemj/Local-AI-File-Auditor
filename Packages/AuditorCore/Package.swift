@@ -12,6 +12,7 @@ let package = Package(
         .library(name: "AuditorPolicy", targets: ["AuditorPolicy"]),
         .library(name: "AuditorStore", targets: ["AuditorStore"]),
         .library(name: "AuditorApply", targets: ["AuditorApply"]),
+        .library(name: "AuditorReports", targets: ["AuditorReports"]),
         .executable(name: "auditor-cli", targets: ["auditor-cli"]),
     ],
     dependencies: [
@@ -58,10 +59,14 @@ let package = Package(
         // Apply engine: plan → preview → restore point → apply → undo.
         .target(name: "AuditorApply", dependencies: ["AuditorModels", "AuditorStore"]),
 
+        // CSV (and shared report formatting) for consultant artifacts.
+        .target(name: "AuditorReports", dependencies: ["AuditorModels", "AuditorStore"]),
+
         // Orchestration: AuditorEngine actor, ScanIndex, ScanHandle.
         .target(name: "AuditorEngine", dependencies: [
             "AuditorModels", "AuditorCrawl", "AuditorHashing", "AuditorExtract",
             "AuditorPolicy", "AuditorDetect", "AuditorAI", "AuditorStore", "AuditorApply",
+            "AuditorReports",
         ]),
 
         // Headless scanner for dogfooding and CI. Runs unsandboxed from the terminal.
@@ -72,6 +77,7 @@ let package = Package(
             "AuditorExtract",
             "AuditorDetect",
             "AuditorPolicy",
+            "AuditorReports",
         ]),
 
         // Shared test helpers (FixtureBuilder). Not in `products`; test-only by convention.
@@ -92,6 +98,7 @@ let package = Package(
             "AuditorStore",
             "AuditorTestSupport",
         ]),
+        .testTarget(name: "AuditorReportsTests", dependencies: ["AuditorReports", "AuditorStore"]),
         .testTarget(name: "AuditorPolicyTests", dependencies: ["AuditorPolicy"]),
         // Engine orchestration + EventKit export tests.
         .testTarget(name: "AuditorEngineTests", dependencies: [

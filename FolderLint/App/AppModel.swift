@@ -1,10 +1,13 @@
+import AppKit
 import AuditorApply
 import AuditorEngine
 import AuditorModels
 import AuditorPolicy
+import AuditorReports
 import AuditorStore
 import Foundation
 import Observation
+import UniformTypeIdentifiers
 
 /// Root dependency container for the SwiftUI app.
 @Observable
@@ -245,6 +248,62 @@ final class AppModel {
 
     func reloadHistory() {
         applyBatches = (try? database.loadApplyBatches()) ?? []
+    }
+
+    func makeAuditReport() -> AuditReport {
+        reloadHistory()
+        var folderPaths = folders.folders.map(\.path)
+        if let mockFixtureRoot {
+            folderPaths.append(mockFixtureRoot.path)
+        }
+        return AuditReport(
+            generatedAt: Date(),
+            policyName: selectedPolicy?.displayName,
+            folderPaths: folderPaths,
+            filesScanned: scanSession.summary?.filesScanned,
+            totalBytes: scanSession.summary?.totalBytes,
+            scanDuration: scanSession.summary?.duration,
+            findings: scanSession.findings,
+            applyBatches: applyBatches
+        )
+    }
+
+    func exportCSV() {
+        let report = makeAuditReport()
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = defaultExportName(extension: "csv")
+        panel.canCreateDirectories = true
+        panel.title = "Export Findings CSV"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try CSVExporter.write(report, to: url)
+            statusMessage = "CSV exported to \(url.lastPathComponent)."
+        } catch {
+            statusMessage = "CSV export failed: \(error.localizedDescription)"
+        }
+    }
+
+    func exportPDF() {
+        let report = makeAuditReport()
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = defaultExportName(extension: "pdf")
+        panel.canCreateDirectories = true
+        panel.title = "Export Audit PDF"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try PDFReportRenderer.write(report, to: url)
+            statusMessage = "PDF exported to \(url.lastPathComponent)."
+        } catch {
+            statusMessage = "PDF export failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func defaultExportName(extension fileExtension: String) -> String {
+        let day = ReportFormatting.isoDay(Date())
+        let policy = selectedPolicyID ?? "universal"
+        return "FolderLint-Audit-\(policy)-\(day).\(fileExtension)"
     }
 
     func previewFile(at path: String) {

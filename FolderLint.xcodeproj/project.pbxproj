@@ -16,15 +16,20 @@
 		3BED491590DCFC76FC232AE2 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEDE03774D1C4E6F58042153 /* AppModel.swift */; };
 		4DC86BAED58F41828A011A1D /* QuickLookPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */; };
 		55312FC37E7B22397DAD7764 /* AuditorStore in Frameworks */ = {isa = PBXBuildFile; productRef = 3588A6F2070FC42C179AD12B /* AuditorStore */; };
+		6ACDD671A49BD7205F1DF34C /* AuditorReports in Frameworks */ = {isa = PBXBuildFile; productRef = B1167058595986E23E0E84C7 /* AuditorReports */; };
 		6CA2C3B51BAB0A2D3B165FE6 /* PlaceholderFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D1CDBF3517F30A2BCB7801 /* PlaceholderFeatureView.swift */; };
 		6D509F67F0B22BF7B47591CE /* NetworkClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E29C8C1A8B7D5D68B94CC6 /* NetworkClient.swift */; };
 		73A7C26B58D668C66C81D69F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A234A8833218085B5366EDA4 /* OnboardingView.swift */; };
 		742E7092B1F99BF29AF5403D /* FolderLintApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD9ED7B6F05355B8F912862 /* FolderLintApp.swift */; };
+		85DC93F68380E3FBAEB0916C /* ReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D972436353D5FAADADCEABB6 /* ReportsView.swift */; };
 		8CB9590E0E81206E9B1DC08F /* FolderAccessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A6F4ECDCE4F098561C1E2B /* FolderAccessManager.swift */; };
 		958A7E74261E05C46460C189 /* PolicyPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E4D27DBABA6CC53881ADA7 /* PolicyPicker.swift */; };
+		991602452A13F1E4C272CCDF /* ReportPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2713931A559F9DDD2D55736 /* ReportPages.swift */; };
 		9C2A34ACEAB9E4F8A387B7D2 /* AuditorPolicy in Frameworks */ = {isa = PBXBuildFile; productRef = 75EABAD5B28A35D341E96EDE /* AuditorPolicy */; };
+		9CE1347324A56BADEBA8AE0D /* PDFReportRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0B3B518C32D0219A7AEE9C /* PDFReportRenderer.swift */; };
 		A6BA6ACE80BAC9C56C52F034 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5FC20E0F1F1407CE436834 /* HistoryView.swift */; };
 		B9053C74D6736F418200BE87 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6AC7054D4F2EA8CC34CD7D /* AppPreferences.swift */; };
+		BF3631CF5C56618D738B7A91 /* PDFReportRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96518EDD490983833758E322 /* PDFReportRendererTests.swift */; };
 		C68AF1C8B95CEB6D9B769DF8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F0EB76391D526CA32F73345 /* DashboardView.swift */; };
 		D165F36C742651F890E190FB /* AuditorModels in Frameworks */ = {isa = PBXBuildFile; productRef = DADBD4D73E321D893CE3E938 /* AuditorModels */; };
 		D9B889233E3B06553EF49C08 /* SecurityScopedBookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D55E020B72B43A96081C71 /* SecurityScopedBookmark.swift */; };
@@ -55,16 +60,20 @@
 		45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPresenter.swift; sourceTree = "<group>"; };
 		53DC5CFBB44D3B613C4C4664 /* BookmarkAndSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkAndSessionTests.swift; sourceTree = "<group>"; };
 		5620F0223B14C84549A8ABE7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5E0B3B518C32D0219A7AEE9C /* PDFReportRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReportRenderer.swift; sourceTree = "<group>"; };
 		6F03577AAABDAC7CB9F5834C /* FindingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindingsViews.swift; sourceTree = "<group>"; };
 		76A6F4ECDCE4F098561C1E2B /* FolderAccessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderAccessManager.swift; sourceTree = "<group>"; };
 		7F0EB76391D526CA32F73345 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		96518EDD490983833758E322 /* PDFReportRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReportRendererTests.swift; sourceTree = "<group>"; };
 		9A6F8AACEA869FF05FA167A2 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		9DF282BEA73B23A3C5369FD2 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A234A8833218085B5366EDA4 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		B08761FA6D806087745C699E /* AuditorCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AuditorCore; path = Packages/AuditorCore; sourceTree = SOURCE_ROOT; };
 		B7E29C8C1A8B7D5D68B94CC6 /* NetworkClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkClient.swift; sourceTree = "<group>"; };
 		C6AD17EE56B945D732732A11 /* FolderLintTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FolderLintTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D972436353D5FAADADCEABB6 /* ReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsView.swift; sourceTree = "<group>"; };
 		DB72728E339F34A07A68F90D /* FolderLint.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FolderLint.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2713931A559F9DDD2D55736 /* ReportPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportPages.swift; sourceTree = "<group>"; };
 		EEDE03774D1C4E6F58042153 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		FC6AC7054D4F2EA8CC34CD7D /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		FFE1CB62A629829D46B1D99A /* ScanSessionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanSessionModel.swift; sourceTree = "<group>"; };
@@ -80,6 +89,7 @@
 				9C2A34ACEAB9E4F8A387B7D2 /* AuditorPolicy in Frameworks */,
 				55312FC37E7B22397DAD7764 /* AuditorStore in Frameworks */,
 				E11CFF1450C0FFC492E75EA0 /* AuditorApply in Frameworks */,
+				6ACDD671A49BD7205F1DF34C /* AuditorReports in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +137,7 @@
 			isa = PBXGroup;
 			children = (
 				53DC5CFBB44D3B613C4C4664 /* BookmarkAndSessionTests.swift */,
+				96518EDD490983833758E322 /* PDFReportRendererTests.swift */,
 			);
 			path = FolderLintTests;
 			sourceTree = "<group>";
@@ -150,6 +161,7 @@
 				E6B5935F064121E73EFD8EDD /* Dashboard */,
 				82F56FEF8CBC9E3ADE9ABD35 /* History */,
 				FD7FE28DB7F21331B3CC2CF3 /* Onboarding */,
+				D0A10780F8484A73C0CDFC71 /* Reports */,
 				B14A9E25B6E5E42DEE6A199C /* Results */,
 				162EA73D6DEF65C177DC1C95 /* SettingsScene */,
 				9D13253A60C2F7BA9B6B0F93 /* Shared */,
@@ -180,6 +192,15 @@
 				19D1CDBF3517F30A2BCB7801 /* PlaceholderFeatureView.swift */,
 			);
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		A954F596B60BEAA5EBC759B1 /* Reports */ = {
+			isa = PBXGroup;
+			children = (
+				5E0B3B518C32D0219A7AEE9C /* PDFReportRenderer.swift */,
+				E2713931A559F9DDD2D55736 /* ReportPages.swift */,
+			);
+			path = Reports;
 			sourceTree = "<group>";
 		};
 		B14A9E25B6E5E42DEE6A199C /* Results */ = {
@@ -215,6 +236,14 @@
 			path = Packages;
 			sourceTree = "<group>";
 		};
+		D0A10780F8484A73C0CDFC71 /* Reports */ = {
+			isa = PBXGroup;
+			children = (
+				D972436353D5FAADADCEABB6 /* ReportsView.swift */,
+			);
+			path = Reports;
+			sourceTree = "<group>";
+		};
 		DA7DA9481EAAA6BC5515080E /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -247,6 +276,7 @@
 				45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */,
 				5338AFEE3FB2DF3C0B53BD7F /* Folders */,
 				B7F1215B0705D62B9580CDD0 /* Network */,
+				A954F596B60BEAA5EBC759B1 /* Reports */,
 				DFB171B5DFD820DE1FE245DC /* Scanning */,
 			);
 			path = Services;
@@ -301,6 +331,7 @@
 				75EABAD5B28A35D341E96EDE /* AuditorPolicy */,
 				3588A6F2070FC42C179AD12B /* AuditorStore */,
 				DD25C42F9FF37DE5146821D5 /* AuditorApply */,
+				B1167058595986E23E0E84C7 /* AuditorReports */,
 			);
 			productName = FolderLint;
 			productReference = DB72728E339F34A07A68F90D /* FolderLint.app */;
@@ -374,6 +405,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				24ADED05DD7697739901B1A9 /* BookmarkAndSessionTests.swift in Sources */,
+				BF3631CF5C56618D738B7A91 /* PDFReportRendererTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -391,9 +423,12 @@
 				A6BA6ACE80BAC9C56C52F034 /* HistoryView.swift in Sources */,
 				6D509F67F0B22BF7B47591CE /* NetworkClient.swift in Sources */,
 				73A7C26B58D668C66C81D69F /* OnboardingView.swift in Sources */,
+				9CE1347324A56BADEBA8AE0D /* PDFReportRenderer.swift in Sources */,
 				6CA2C3B51BAB0A2D3B165FE6 /* PlaceholderFeatureView.swift in Sources */,
 				958A7E74261E05C46460C189 /* PolicyPicker.swift in Sources */,
 				4DC86BAED58F41828A011A1D /* QuickLookPresenter.swift in Sources */,
+				991602452A13F1E4C272CCDF /* ReportPages.swift in Sources */,
+				85DC93F68380E3FBAEB0916C /* ReportsView.swift in Sources */,
 				0C1BBDC7260F9D46D9137720 /* RootView.swift in Sources */,
 				01B5C5A66003D7F69DB6DD49 /* ScanSessionModel.swift in Sources */,
 				D9B889233E3B06553EF49C08 /* SecurityScopedBookmark.swift in Sources */,
@@ -642,6 +677,10 @@
 		75EABAD5B28A35D341E96EDE /* AuditorPolicy */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AuditorPolicy;
+		};
+		B1167058595986E23E0E84C7 /* AuditorReports */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AuditorReports;
 		};
 		B5C9559CF1F4C67DAFF8FD9C /* AuditorEngine */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -66,11 +66,7 @@ struct MainSplitView: View {
         case .history:
             HistoryView()
         case .reports:
-            PlaceholderFeatureView(
-                title: "Reports",
-                systemImage: "doc.richtext",
-                message: "CSV and PDF audit reports arrive in Phase 10."
-            )
+            ReportsView()
         }
     }
 

@@ -55,6 +55,7 @@ final class AppModel {
     let folders: FolderAccessManager
     let scanSession: ScanSessionModel
     let licenseManager: LicenseManager
+    let updater: UpdaterService
 
     var needsOnboarding: Bool
     var selectedSidebar: SidebarItem = .dashboard
@@ -70,6 +71,7 @@ final class AppModel {
         database: AuditorDatabase? = nil,
         engine: AuditorEngine? = nil,
         licenseManager: LicenseManager? = nil,
+        updater: UpdaterService? = nil,
         skipOnboardingForPreviews: Bool = false
     ) {
         let db: AuditorDatabase
@@ -84,6 +86,8 @@ final class AppModel {
         self.folders = FolderAccessManager(database: db)
         self.scanSession = ScanSessionModel()
         self.licenseManager = licenseManager ?? LicenseManager()
+        // One updater per process. Tests/previews pass a non-starting instance.
+        self.updater = updater ?? UpdaterService(startingUpdater: !skipOnboardingForPreviews)
         self.needsOnboarding = skipOnboardingForPreviews ? false : !AppPreferences.didCompleteOnboarding
         self.selectedPolicyID = AppPreferences.activePolicyID
         self.availablePolicies = Self.loadBundledPolicies()

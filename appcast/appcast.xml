@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>FolderLint</title>
+    <link>https://folderlint.com/appcast.xml</link>
+    <description>FolderLint release feed. Entries are added by Scripts/update_appcast.sh during make release.</description>
+    <language>en</language>
+    <!-- No shipping builds yet — first entry arrives with the 0.9 beta dry run. -->
+  </channel>
+</rss>

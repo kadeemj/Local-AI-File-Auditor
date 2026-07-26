@@ -27,6 +27,12 @@ struct FolderLintApp: App {
                 }
                 .keyboardShortcut(".", modifiers: [.command])
             }
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    appModel.updater.checkForUpdates()
+                }
+                .disabled(!appModel.updater.canCheckForUpdates)
+            }
         }
 
         Settings {

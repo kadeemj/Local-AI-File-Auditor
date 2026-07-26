@@ -40,5 +40,14 @@
 	<string>FolderLint audits only the folders you select, including folders on external drives you choose.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>FolderLint adds an action-date reminder only when you explicitly choose Export to Reminders.</string>
+	<!-- Sparkle 2 (sandboxed). Feed host disclosed in docs/NETWORK_POLICY.md. -->
+	<key>SUFeedURL</key>
+	<string>https://folderlint.com/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>+BVSePHtDpOmmqdj5vBB09coaEUQK3xeDebMQCS/3p0=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUEnableSystemProfiling</key>
+	<false/>
 </dict>
 </plist>

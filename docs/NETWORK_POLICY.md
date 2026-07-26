@@ -11,7 +11,7 @@ It is published verbatim on the website and enforced in the codebase.
 | Purpose | Host | When | What is sent |
 |---|---|---|---|
 | License activation/validation | `api.lemonsqueezy.com` | When you enter a license key, then at most once per 24 hours | Your license key, an instance name (your Mac's name, e.g. "Kadeem's MacBook Pro"), and the activation instance ID |
-| Update check (Sparkle) | the FolderLint appcast host | On your schedule, after you consent to automatic checks | A GET request for the appcast feed; the app version is part of the standard user agent. System profiling is disabled. |
+| Update check (Sparkle) | `folderlint.com` (appcast + update archives) | On your schedule, after you consent to automatic checks | A GET request for `https://folderlint.com/appcast.xml`; the app version is part of the standard user agent. System profiling is disabled (`SUEnableSystemProfiling=false`). |
 
 That is the entire list. Specifically, FolderLint **never** transmits:
 

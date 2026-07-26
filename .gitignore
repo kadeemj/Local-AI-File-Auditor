@@ -1,6 +1,7 @@
 # Xcode
 build/
 DerivedData/
+dist/
 *.xcuserstate
 xcuserdata/
 *.xcscmblueprint
@@ -22,3 +23,4 @@ Package.resolved
 # Secrets (never commit)
 *.p12
 *_private*.key
+.folderlint/

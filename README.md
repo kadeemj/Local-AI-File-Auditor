@@ -30,9 +30,11 @@ document-quality problems before they become operational or compliance problems.
 | `Packages/AuditorCore/` | The scanning engine (SPM package, headlessly testable) |
 | `FolderLint/` | SwiftUI app target |
 | `Config/` | xcconfig build settings |
-| `Scripts/` | Build gates + release pipeline |
+| `Scripts/` | Build gates + release pipeline (`make release`) |
+| `appcast/` | Sparkle feed + update archives for publishing |
 | `project.yml` | XcodeGen source of truth for the Xcode project |
 | `docs/NETWORK_POLICY.md` | The complete, auditable list of network connections |
+| `docs/RELEASE.md` | Developer ID / notarize / Sparkle release guide |
 
 ## Development
 
@@ -46,6 +48,6 @@ make build      # Debug build of the app
 ```
 
 The implementation plan and phase status live in the project plan document.
-Phases 0–11 are implemented: onboarding, scan, approve/apply/undo, CSV/PDF
-audit reports, and Lemon Squeezy licensing (14-day trial, offline grace,
-degraded Scan/Apply). Sparkle updates are Phase 12.
+Phases 0–12 are implemented: onboarding, scan, approve/apply/undo, CSV/PDF
+reports, Lemon Squeezy licensing, and Sparkle + `make release` / `make verify`.
+Website, storefront, and hardening are Phase 13. See [docs/RELEASE.md](docs/RELEASE.md).

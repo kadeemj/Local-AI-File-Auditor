@@ -17,12 +17,9 @@ struct SettingsView: View {
             LicenseSettingsView()
                 .environment(appModel)
                 .tabItem { Label("License", systemImage: "key") }
-            PlaceholderFeatureView(
-                title: "Updates",
-                systemImage: "arrow.triangle.2.circlepath",
-                message: "Sparkle update checks arrive in Phase 12."
-            )
-            .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
+            UpdatesSettingsView()
+                .environment(appModel)
+                .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
             privacyTab
                 .tabItem { Label("Privacy", systemImage: "hand.raised") }
         }
@@ -127,6 +124,9 @@ struct SettingsView: View {
                 .font(.headline)
             Text("FolderLint may contact only api.lemonsqueezy.com (licensing) and the Sparkle appcast host (updates). There is no telemetry or crash SDK.")
                 .foregroundStyle(.secondary)
+            if let host = appModel.updater.feedURL?.host() {
+                LabeledContent("Appcast host", value: host)
+            }
             if let last = appModel.licenseManager.lastNetworkCallAt {
                 LabeledContent("Last license network call") {
                     Text(last.formatted(date: .abbreviated, time: .shortened))

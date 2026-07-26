@@ -1,7 +1,8 @@
 #include "Shared.xcconfig"
 #include "Signing.xcconfig"
 
-// Direct distribution: Developer ID Application + notarization (Phase 12).
+// Direct distribution: Developer ID Application + notarization.
+// Always ship via `make release` (archive → -exportArchive). Never codesign --deep.
 CODE_SIGN_STYLE = Manual
 CODE_SIGN_IDENTITY = Developer ID Application
 SWIFT_OPTIMIZATION_LEVEL = -O

@@ -18,6 +18,7 @@
 		3BED491590DCFC76FC232AE2 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEDE03774D1C4E6F58042153 /* AppModel.swift */; };
 		4DC86BAED58F41828A011A1D /* QuickLookPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45EB3E1D8F951531ADFD328C /* QuickLookPresenter.swift */; };
 		55312FC37E7B22397DAD7764 /* AuditorStore in Frameworks */ = {isa = PBXBuildFile; productRef = 3588A6F2070FC42C179AD12B /* AuditorStore */; };
+		635A33F52CEF1914D1EFC739 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 59BEA9F651D38FD0A0828EC8 /* Sparkle */; };
 		6627D764103B3E52D68410A6 /* MockLicensingBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330C5D4021FF4229FFC50842 /* MockLicensingBackend.swift */; };
 		6ACDD671A49BD7205F1DF34C /* AuditorReports in Frameworks */ = {isa = PBXBuildFile; productRef = B1167058595986E23E0E84C7 /* AuditorReports */; };
 		6CA2C3B51BAB0A2D3B165FE6 /* PlaceholderFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D1CDBF3517F30A2BCB7801 /* PlaceholderFeatureView.swift */; };
@@ -34,14 +35,17 @@
 		9CE1347324A56BADEBA8AE0D /* PDFReportRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0B3B518C32D0219A7AEE9C /* PDFReportRenderer.swift */; };
 		A12CE7D8701307C5201D3561 /* LicensingBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = B93F099178CF1A2CD3101E11 /* LicensingBackend.swift */; };
 		A6BA6ACE80BAC9C56C52F034 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B5FC20E0F1F1407CE436834 /* HistoryView.swift */; };
+		A7C820BB765BBB1F2899C560 /* UpdaterService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F3A93A151F56D5DDA3A7774 /* UpdaterService.swift */; };
 		B62CDAFF9EF40CEE38840265 /* LicenseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724904F09616A2E7C8DD361E /* LicenseModels.swift */; };
 		B9053C74D6736F418200BE87 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6AC7054D4F2EA8CC34CD7D /* AppPreferences.swift */; };
 		BF3631CF5C56618D738B7A91 /* PDFReportRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96518EDD490983833758E322 /* PDFReportRendererTests.swift */; };
 		C68AF1C8B95CEB6D9B769DF8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F0EB76391D526CA32F73345 /* DashboardView.swift */; };
+		C72BBE553408CD9A604E1EB9 /* UpdaterServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03DC3CF05BB9132B67F9D3DD /* UpdaterServiceTests.swift */; };
 		CF999BA78D6CC617F7EDAD81 /* LicenseManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 660E28616FD65609139EF490 /* LicenseManagerTests.swift */; };
 		D165F36C742651F890E190FB /* AuditorModels in Frameworks */ = {isa = PBXBuildFile; productRef = DADBD4D73E321D893CE3E938 /* AuditorModels */; };
 		D9B889233E3B06553EF49C08 /* SecurityScopedBookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D55E020B72B43A96081C71 /* SecurityScopedBookmark.swift */; };
 		E11CFF1450C0FFC492E75EA0 /* AuditorApply in Frameworks */ = {isa = PBXBuildFile; productRef = DD25C42F9FF37DE5146821D5 /* AuditorApply */; };
+		F73D01C56B378F6320B92774 /* UpdatesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99D822FB55AB5C3F4ABE28F /* UpdatesSettingsView.swift */; };
 		FCD15E23FB9D3EAD02711E61 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5620F0223B14C84549A8ABE7 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -56,6 +60,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		03DC3CF05BB9132B67F9D3DD /* UpdaterServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterServiceTests.swift; sourceTree = "<group>"; };
 		0FD9ED7B6F05355B8F912862 /* FolderLintApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderLintApp.swift; sourceTree = "<group>"; };
 		11D55E020B72B43A96081C71 /* SecurityScopedBookmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityScopedBookmark.swift; sourceTree = "<group>"; };
 		19D1CDBF3517F30A2BCB7801 /* PlaceholderFeatureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderFeatureView.swift; sourceTree = "<group>"; };
@@ -77,10 +82,12 @@
 		724904F09616A2E7C8DD361E /* LicenseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseModels.swift; sourceTree = "<group>"; };
 		76A6F4ECDCE4F098561C1E2B /* FolderAccessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderAccessManager.swift; sourceTree = "<group>"; };
 		7F0EB76391D526CA32F73345 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		8F3A93A151F56D5DDA3A7774 /* UpdaterService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterService.swift; sourceTree = "<group>"; };
 		96518EDD490983833758E322 /* PDFReportRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReportRendererTests.swift; sourceTree = "<group>"; };
 		9A6F8AACEA869FF05FA167A2 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		9DF282BEA73B23A3C5369FD2 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A234A8833218085B5366EDA4 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A99D822FB55AB5C3F4ABE28F /* UpdatesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesSettingsView.swift; sourceTree = "<group>"; };
 		B08761FA6D806087745C699E /* AuditorCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AuditorCore; path = Packages/AuditorCore; sourceTree = SOURCE_ROOT; };
 		B7E29C8C1A8B7D5D68B94CC6 /* NetworkClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkClient.swift; sourceTree = "<group>"; };
 		B93F099178CF1A2CD3101E11 /* LicensingBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicensingBackend.swift; sourceTree = "<group>"; };
@@ -106,12 +113,29 @@
 				55312FC37E7B22397DAD7764 /* AuditorStore in Frameworks */,
 				E11CFF1450C0FFC492E75EA0 /* AuditorApply in Frameworks */,
 				6ACDD671A49BD7205F1DF34C /* AuditorReports in Frameworks */,
+				635A33F52CEF1914D1EFC739 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		01672C9AC35CC5737440426E /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				A99D822FB55AB5C3F4ABE28F /* UpdatesSettingsView.swift */,
+			);
+			path = Updates;
+			sourceTree = "<group>";
+		};
+		01D1C5B843B41E0C15FCED2C /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				8F3A93A151F56D5DDA3A7774 /* UpdaterService.swift */,
+			);
+			path = Updates;
+			sourceTree = "<group>";
+		};
 		0B6173E8DED644F39FA6B4A9 = {
 			isa = PBXGroup;
 			children = (
@@ -155,6 +179,7 @@
 				53DC5CFBB44D3B613C4C4664 /* BookmarkAndSessionTests.swift */,
 				660E28616FD65609139EF490 /* LicenseManagerTests.swift */,
 				96518EDD490983833758E322 /* PDFReportRendererTests.swift */,
+				03DC3CF05BB9132B67F9D3DD /* UpdaterServiceTests.swift */,
 			);
 			path = FolderLintTests;
 			sourceTree = "<group>";
@@ -183,6 +208,7 @@
 				B14A9E25B6E5E42DEE6A199C /* Results */,
 				162EA73D6DEF65C177DC1C95 /* SettingsScene */,
 				9D13253A60C2F7BA9B6B0F93 /* Shared */,
+				01672C9AC35CC5737440426E /* Updates */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -318,6 +344,7 @@
 				B7F1215B0705D62B9580CDD0 /* Network */,
 				A954F596B60BEAA5EBC759B1 /* Reports */,
 				DFB171B5DFD820DE1FE245DC /* Scanning */,
+				01D1C5B843B41E0C15FCED2C /* Updates */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -372,6 +399,7 @@
 				3588A6F2070FC42C179AD12B /* AuditorStore */,
 				DD25C42F9FF37DE5146821D5 /* AuditorApply */,
 				B1167058595986E23E0E84C7 /* AuditorReports */,
+				59BEA9F651D38FD0A0828EC8 /* Sparkle */,
 			);
 			productName = FolderLint;
 			productReference = DB72728E339F34A07A68F90D /* FolderLint.app */;
@@ -404,6 +432,7 @@
 			mainGroup = 0B6173E8DED644F39FA6B4A9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				BFD188671E33902FC939CB49 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				0AFA345B7147F76EAF641622 /* XCLocalSwiftPackageReference "Packages/AuditorCore" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -447,6 +476,7 @@
 				24ADED05DD7697739901B1A9 /* BookmarkAndSessionTests.swift in Sources */,
 				CF999BA78D6CC617F7EDAD81 /* LicenseManagerTests.swift in Sources */,
 				BF3631CF5C56618D738B7A91 /* PDFReportRendererTests.swift in Sources */,
+				C72BBE553408CD9A604E1EB9 /* UpdaterServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -481,6 +511,8 @@
 				01B5C5A66003D7F69DB6DD49 /* ScanSessionModel.swift in Sources */,
 				D9B889233E3B06553EF49C08 /* SecurityScopedBookmark.swift in Sources */,
 				FCD15E23FB9D3EAD02711E61 /* SettingsView.swift in Sources */,
+				A7C820BB765BBB1F2899C560 /* UpdaterService.swift in Sources */,
+				F73D01C56B378F6320B92774 /* UpdatesSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -717,10 +749,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		BFD188671E33902FC939CB49 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		3588A6F2070FC42C179AD12B /* AuditorStore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AuditorStore;
+		};
+		59BEA9F651D38FD0A0828EC8 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BFD188671E33902FC939CB49 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 		75EABAD5B28A35D341E96EDE /* AuditorPolicy */ = {
 			isa = XCSwiftPackageProductDependency;

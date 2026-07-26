@@ -2,7 +2,8 @@
 // Sparkle EdDSA private key) live in the Keychain and are never in this repo.
 //
 // FolderLint ships under Kadeem's personal team (Kadeem Jeffery / kvjeffery@icloud.com).
-// Phase 12 prerequisites, done once on developer.apple.com or in Xcode:
-//   1. Create a "Developer ID Application" certificate for this team
-//   2. xcrun notarytool store-credentials "notary-profile" (app-specific password)
+// Release prerequisites (see docs/RELEASE.md):
+//   1. "Developer ID Application" certificate for this team
+//   2. xcrun notarytool store-credentials "notary-profile"
+//   3. make keys  → backup ~/.folderlint/sparkle_eddsa_private.key to a password manager
 DEVELOPMENT_TEAM = JUQMKZZ7TJ

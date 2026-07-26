@@ -39,59 +39,53 @@ Full design and 14-phase roadmap:
 
 ## Current implementation state
 
-Phases 0–11 are complete.
+Phases 0–12 are complete (Phase 12 pipeline is wired; 0.9 beta dry-run is the remaining gate before 1.0).
 
-### Phases 0–10
+### Phases 0–11
 
-Engine + app shell + apply/undo + CSV/PDF reports. See commits through `46f8ca4`.
+Engine + app shell + apply/undo + reports + licensing. See commits through `e1708b4`.
 
-### Phase 11 — Trial and Lemon Squeezy licensing
+### Phase 12 — Sparkle + release pipeline
 
-- Keychain-anchored 14-day offline trial (`TrialClock`, `KeychainStore` / `SecureStore`)
-- `LicensingBackend` protocol + `LemonSqueezyClient` (activate/validate/deactivate via `NetworkClient` only) + `MockLicensingBackend` (`TEST-PRO`, `TEST-FAIL*`, `TEST-PACK-*`)
-- `LicenseManager` state machine: trial → licensed → 30-day offline grace → expired/degraded
-- Degraded mode: past findings/history/reports OK; **Scan and Apply disabled**
-- Policy-pack unlock via product/variant name mapping (`PolicyPackCatalog`)
-- Settings → License UI; Privacy shows last license network call
-- Onboarding starts trial; toolbar/dashboard gate on `canScan`
-- DEBUG defaults to mock licensing (`AppPreferences.useMockLicensing`)
+- Sparkle ≥2.8 via SPM; `UpdaterService` owns one `SPUStandardUpdaterController` in `AppModel`
+- Sandbox: `SUEnableInstallerLauncherService`, mach-lookup `-spks`/`-spki`; no Downloader XPC (app has network.client)
+- Info.plist: `SUFeedURL=https://folderlint.com/appcast.xml`, `SUPublicEDKey`, profiling off
+- Settings → Updates UI + menu “Check for Updates…”
+- Scripts: `release.sh`, `notarize.sh`, `make_dmg.sh`, `update_appcast.sh`, `verify.sh`, `generate_sparkle_keys.sh`
+- `make release VERSION=x.y.z` / `make verify APP=…` / `make keys`
+- `Config/ExportOptions.plist` (developer-id); docs in `docs/RELEASE.md`
+- EdDSA private key: Keychain account `folderlint`, backup at `~/.folderlint/sparkle_eddsa_private.key` (**never commit**; back up to password manager)
 
 ## Verification
 
-- 106 engine tests / 24 suites pass (`make test`)
-- 15 app tests pass (`make test-app`) — bookmarks, ScanSessionModel, PDF, TrialClock, LicenseManager
-- `make build` succeeds; network-policy gate passes (Lemon client uses `NetworkClient` only)
+- Engine + app tests + network-policy gate (see latest `make test` / `make test-app`)
+- Full notarized release + real self-update is the 0.9 beta dry-run (checklist in `docs/RELEASE.md`)
 
 Useful commands:
 
 ```sh
-swift test --package-path Packages/AuditorCore
-make build
-make test-app
+make generate && make build && make test-app
 Scripts/check_network_policy.sh
+make keys
+make release VERSION=0.9.0   # when ready for beta dry-run
+make verify APP=dist/0.9.0/export/FolderLint.app DMG=dist/0.9.0/FolderLint-0.9.0.dmg
 ```
-
-Dogfood licensing in Debug: complete onboarding (starts trial) → Settings → License → activate `TEST-PRO` or expire trial and confirm Scan is disabled while Reports/History still work.
 
 ## Important remaining scaffolds
 
 - Findings/scan-cache persistence is still not fully wired (schema exists; findings live in session state + journal).
 - EventKit export exists as an engine API but has no UI yet.
-- Real Lemon Squeezy product/variant IDs are configured at storefront time (Phase 13).
+- Real Lemon Squeezy product/variant IDs and folderlint.com hosting are Phase 13.
+- **0.9 beta dry-run** (Gatekeeper + real Sparkle self-update) before calling distribution done.
 
-## Next phase: Phase 12 — Sparkle and release pipeline
+## Next phase: Phase 13 — website and hardening
 
 Implement:
 
-- Sandboxed Sparkle 2 (`SPUStandardUpdaterController`, installer/downloader XPC entitlements)
-- EdDSA keys + appcast host
-- `make release` / `make verify` (archive → `-exportArchive` → notarize → staple → DMG → appcast)
-- Beta dry run including real self-update before 1.0
+- Static site + network policy page; publish appcast
+- Lemon Squeezy products/variants/checkout
+- 100k-file perf pass; clean-VM offline Gatekeeper; license + apply/undo abuse cases
 
-Releases must use archive → `-exportArchive`; a plain Release build carries unsuitable debugging/signing properties. Team `JUQMKZZ7TJ` is already set up — do not redo certificates.
+Releases must use archive → `-exportArchive`; never `codesign --deep`. Team `JUQMKZZ7TJ` is already set up.
 
-## Later phases
-
-- Phase 13: website and hardening (LS products, static site, perf, Gatekeeper, license edge cases)
-
-Continue the established pattern: implement the full phase, add real tests, dogfood through the CLI or app, run package/app/privacy gates, commit with a detailed message, and push `origin/main`.
+Continue the established pattern: implement the full phase, add real tests, dogfood, run gates, commit with a detailed message, and push `origin/main`.

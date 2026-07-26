@@ -15,6 +15,9 @@ configFiles:
 packages:
   AuditorCore:
     path: Packages/AuditorCore
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.8.0"
 
 targets:
   FolderLint:
@@ -35,6 +38,8 @@ targets:
         product: AuditorApply
       - package: AuditorCore
         product: AuditorReports
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         INFOPLIST_FILE: FolderLint/Info.plist

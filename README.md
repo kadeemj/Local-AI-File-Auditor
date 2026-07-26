@@ -46,5 +46,6 @@ make build      # Debug build of the app
 ```
 
 The implementation plan and phase status live in the project plan document.
-Phases 0–10 are implemented: onboarding, scan, approve/apply/undo, and
-CSV/PDF audit reports. Licensing is Phase 11.
+Phases 0–11 are implemented: onboarding, scan, approve/apply/undo, CSV/PDF
+audit reports, and Lemon Squeezy licensing (14-day trial, offline grace,
+degraded Scan/Apply). Sparkle updates are Phase 12.

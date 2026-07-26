@@ -14,12 +14,9 @@ struct SettingsView: View {
                 .tabItem { Label("Folders", systemImage: "folder") }
             policyTab
                 .tabItem { Label("Policy", systemImage: "list.clipboard") }
-            PlaceholderFeatureView(
-                title: "License",
-                systemImage: "key",
-                message: "Lemon Squeezy licensing arrives in Phase 11."
-            )
-            .tabItem { Label("License", systemImage: "key") }
+            LicenseSettingsView()
+                .environment(appModel)
+                .tabItem { Label("License", systemImage: "key") }
             PlaceholderFeatureView(
                 title: "Updates",
                 systemImage: "arrow.triangle.2.circlepath",
@@ -130,6 +127,15 @@ struct SettingsView: View {
                 .font(.headline)
             Text("FolderLint may contact only api.lemonsqueezy.com (licensing) and the Sparkle appcast host (updates). There is no telemetry or crash SDK.")
                 .foregroundStyle(.secondary)
+            if let last = appModel.licenseManager.lastNetworkCallAt {
+                LabeledContent("Last license network call") {
+                    Text(last.formatted(date: .abbreviated, time: .shortened))
+                }
+            } else {
+                Text("No license network calls yet.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
             Text("See docs/NETWORK_POLICY.md in the repository for the auditable claim.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)

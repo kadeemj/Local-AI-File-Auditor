@@ -48,8 +48,10 @@ struct DashboardView: View {
             } else {
                 Button("Scan Folders") { appModel.startScan() }
                     .keyboardShortcut("r", modifiers: [.command])
+                    .disabled(!appModel.canScan)
                 Button("Mock Scan") { appModel.startScan(useMock: true) }
                     .help("Disposable on-disk fixture with apply-ready findings")
+                    .disabled(!appModel.canScan)
             }
             if !appModel.scanSession.state.actionableApprovedFindings.isEmpty {
                 Button("Review Apply") { appModel.selectedSidebar = .apply }

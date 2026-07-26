@@ -36,6 +36,10 @@ struct MainSplitView: View {
         }
         .toolbar {
             ToolbarItemGroup {
+                if !appModel.canScan {
+                    Text(appModel.licenseManager.status.shortLabel)
+                        .foregroundStyle(.secondary)
+                }
                 if appModel.scanSession.isRunning {
                     ProgressView()
                         .controlSize(.small)
@@ -44,7 +48,10 @@ struct MainSplitView: View {
                     Button("Scan", systemImage: "play.fill") {
                         appModel.startScan()
                     }
-                    .help("Scan granted folders with the active policy")
+                    .disabled(!appModel.canScan)
+                    .help(appModel.canScan
+                          ? "Scan granted folders with the active policy"
+                          : appModel.licenseManager.status.detail)
                 }
             }
         }
@@ -78,6 +85,9 @@ struct MainSplitView: View {
             Text("\(appModel.folders.folders.count) folder\(appModel.folders.folders.count == 1 ? "" : "s") granted")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+            Text(appModel.licenseManager.status.shortLabel)
+                .font(.caption2)
+                .foregroundStyle(appModel.canScan ? Color.secondary : Color.orange)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -39,26 +39,28 @@ Full design and 14-phase roadmap:
 
 ## Current implementation state
 
-Phases 0–10 are complete.
+Phases 0–11 are complete.
 
-### Phases 0–9
+### Phases 0–10
 
-Engine + app shell + apply/undo. See commits through `5f418a1`.
+Engine + app shell + apply/undo + CSV/PDF reports. See commits through `46f8ca4`.
 
-### Phase 10 — CSV and PDF reports
+### Phase 11 — Trial and Lemon Squeezy licensing
 
-- `AuditorReports`: `AuditReport`, `ReportFormatting`, `CSVExporter` (RFC 4180 escaping)
-- CLI: `auditor-cli scan <folder> --csv <path>`
-- App Reports tab: summary cards, Export CSV… / Export PDF…
-- `PDFReportRenderer` via SwiftUI `ImageRenderer`: summary page, findings by severity, applied-changes log
-- Consultant artifact stays on-device; no network involvement
+- Keychain-anchored 14-day offline trial (`TrialClock`, `KeychainStore` / `SecureStore`)
+- `LicensingBackend` protocol + `LemonSqueezyClient` (activate/validate/deactivate via `NetworkClient` only) + `MockLicensingBackend` (`TEST-PRO`, `TEST-FAIL*`, `TEST-PACK-*`)
+- `LicenseManager` state machine: trial → licensed → 30-day offline grace → expired/degraded
+- Degraded mode: past findings/history/reports OK; **Scan and Apply disabled**
+- Policy-pack unlock via product/variant name mapping (`PolicyPackCatalog`)
+- Settings → License UI; Privacy shows last license network call
+- Onboarding starts trial; toolbar/dashboard gate on `canScan`
+- DEBUG defaults to mock licensing (`AppPreferences.useMockLicensing`)
 
 ## Verification
 
 - 106 engine tests / 24 suites pass (`make test`)
-- 4 app tests pass (`make test-app`) — includes PDF render smoke
-- `make build` succeeds; network-policy gate passes
-- CLI CSV dogfood emits findings flat file with correct header/escaping
+- 15 app tests pass (`make test-app`) — bookmarks, ScanSessionModel, PDF, TrialClock, LicenseManager
+- `make build` succeeds; network-policy gate passes (Lemon client uses `NetworkClient` only)
 
 Useful commands:
 
@@ -67,33 +69,29 @@ swift test --package-path Packages/AuditorCore
 make build
 make test-app
 Scripts/check_network_policy.sh
-
-swift run --package-path Packages/AuditorCore auditor-cli scan <folder> --policy nonprofit --csv ~/Desktop/audit.csv
 ```
 
-Dogfood in the app: Mock Scan → Reports → Export CSV / Export PDF.
+Dogfood licensing in Debug: complete onboarding (starts trial) → Settings → License → activate `TEST-PRO` or expire trial and confirm Scan is disabled while Reports/History still work.
 
 ## Important remaining scaffolds
 
 - Findings/scan-cache persistence is still not fully wired (schema exists; findings live in session state + journal).
 - EventKit export exists as an engine API but has no UI yet.
-- Licensing, Sparkle, and release automation remain future phases.
+- Real Lemon Squeezy product/variant IDs are configured at storefront time (Phase 13).
 
-## Next phase: Phase 11 — trial and Lemon Squeezy licensing
+## Next phase: Phase 12 — Sparkle and release pipeline
 
 Implement:
 
-- Keychain-anchored 14-day offline trial
-- Lemon Squeezy license activate/validate/deactivate
-- `LicenseManager` state machine + degraded modes
-- Policy-pack unlock path
-- Settings → License UI
+- Sandboxed Sparkle 2 (`SPUStandardUpdaterController`, installer/downloader XPC entitlements)
+- EdDSA keys + appcast host
+- `make release` / `make verify` (archive → `-exportArchive` → notarize → staple → DMG → appcast)
+- Beta dry run including real self-update before 1.0
+
+Releases must use archive → `-exportArchive`; a plain Release build carries unsuitable debugging/signing properties. Team `JUQMKZZ7TJ` is already set up — do not redo certificates.
 
 ## Later phases
 
-- Phase 12: Sparkle and scripted release pipeline
-- Phase 13: website and hardening
-
-Developer infrastructure is already configured. Do not redo certificates or notarization setup. Releases must use archive → `-exportArchive`; a plain Release build carries unsuitable debugging/signing properties.
+- Phase 13: website and hardening (LS products, static site, perf, Gatekeeper, license edge cases)
 
 Continue the established pattern: implement the full phase, add real tests, dogfood through the CLI or app, run package/app/privacy gates, commit with a detailed message, and push `origin/main`.

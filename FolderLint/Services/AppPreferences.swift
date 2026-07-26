@@ -7,6 +7,7 @@ enum AppPreferences {
     private static let onboardingKey = "folderlint.didCompleteOnboarding"
     private static let policyKey = "folderlint.activePolicyID"
     private static let useMockScanKey = "folderlint.useMockScan"
+    private static let useMockLicensingKey = "folderlint.useMockLicensing"
 
     static var didCompleteOnboarding: Bool {
         get { defaults.bool(forKey: onboardingKey) }
@@ -32,5 +33,20 @@ enum AppPreferences {
     static var useMockScan: Bool {
         get { defaults.bool(forKey: useMockScanKey) }
         set { defaults.set(newValue, forKey: useMockScanKey) }
+    }
+
+    /// Uses `MockLicensingBackend` instead of Lemon Squeezy (dogfooding / DEBUG).
+    static var useMockLicensing: Bool {
+        get {
+            if defaults.object(forKey: useMockLicensingKey) == nil {
+                #if DEBUG
+                return true
+                #else
+                return false
+                #endif
+            }
+            return defaults.bool(forKey: useMockLicensingKey)
+        }
+        set { defaults.set(newValue, forKey: useMockLicensingKey) }
     }
 }

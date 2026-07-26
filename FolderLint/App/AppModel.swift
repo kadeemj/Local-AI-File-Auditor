@@ -54,6 +54,7 @@ final class AppModel {
     let applyEngine: ApplyEngine
     let folders: FolderAccessManager
     let scanSession: ScanSessionModel
+    let licenseManager: LicenseManager
 
     var needsOnboarding: Bool
     var selectedSidebar: SidebarItem = .dashboard
@@ -68,6 +69,7 @@ final class AppModel {
     init(
         database: AuditorDatabase? = nil,
         engine: AuditorEngine? = nil,
+        licenseManager: LicenseManager? = nil,
         skipOnboardingForPreviews: Bool = false
     ) {
         let db: AuditorDatabase
@@ -81,20 +83,25 @@ final class AppModel {
         self.applyEngine = ApplyEngine(database: db)
         self.folders = FolderAccessManager(database: db)
         self.scanSession = ScanSessionModel()
+        self.licenseManager = licenseManager ?? LicenseManager()
         self.needsOnboarding = skipOnboardingForPreviews ? false : !AppPreferences.didCompleteOnboarding
         self.selectedPolicyID = AppPreferences.activePolicyID
         self.availablePolicies = Self.loadBundledPolicies()
         reloadHistory()
+        Task { await self.licenseManager.validateIfNeeded() }
     }
 
     var selectedPolicy: Policy? {
         availablePolicies.first { $0.id == selectedPolicyID }
     }
 
+    var canScan: Bool { licenseManager.capabilities.canScan }
+
     func completeOnboarding(policyID: String?) {
         selectedPolicyID = policyID
         AppPreferences.activePolicyID = policyID
         AppPreferences.didCompleteOnboarding = true
+        _ = licenseManager.startTrialIfNeeded()
         needsOnboarding = false
     }
 
@@ -104,6 +111,10 @@ final class AppModel {
     }
 
     func startScan(useMock: Bool? = nil) {
+        guard canScan else {
+            statusMessage = licenseManager.status.detail
+            return
+        }
         let mock = useMock ?? AppPreferences.useMockScan
         statusMessage = nil
         draftPlan = nil
@@ -204,6 +215,10 @@ final class AppModel {
     }
 
     func applyApproved() {
+        guard licenseManager.capabilities.canApply else {
+            statusMessage = "Apply is disabled until your license or trial is active."
+            return
+        }
         refreshDraftPlan()
         guard let plan = draftPlan else {
             statusMessage = "No approved file changes to apply."

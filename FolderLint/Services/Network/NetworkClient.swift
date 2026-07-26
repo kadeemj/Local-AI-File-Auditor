@@ -27,6 +27,27 @@ struct NetworkClient: Sendable {
         guard let host = request.url?.host(), Self.allowedHosts.contains(host) else {
             throw NetworkPolicyViolation.disallowedHost(request.url?.host() ?? "<nil>")
         }
-        return try await session.data(for: request)
+        let result = try await session.data(for: request)
+        await MainActor.run {
+            NetworkClientLastCall.record(host: host, at: Date())
+        }
+        return result
     }
+}
+
+/// Privacy settings surface — timestamps of allowlisted network calls.
+enum NetworkClientLastCall {
+    @MainActor
+    private static var stamp: (host: String, at: Date)?
+
+    @MainActor
+    static func record(host: String, at date: Date) {
+        stamp = (host, date)
+    }
+
+    @MainActor
+    static var lastHost: String? { stamp?.host }
+
+    @MainActor
+    static var lastDate: Date? { stamp?.at }
 }
